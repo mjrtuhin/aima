@@ -22,6 +22,7 @@ from platform.api.routers import (
     clv_churn,
     agent,
     alerts,
+    import_data,
 )
 
 log = structlog.get_logger()
@@ -72,6 +73,7 @@ app.include_router(attribution.router, prefix=settings.API_PREFIX, tags=["Attrib
 app.include_router(clv_churn.router, prefix=settings.API_PREFIX, tags=["CLV & Churn"])
 app.include_router(agent.router, prefix=settings.API_PREFIX, tags=["AI Agent"])
 app.include_router(alerts.router, prefix=settings.API_PREFIX, tags=["Alerts"])
+app.include_router(import_data.router, prefix=settings.API_PREFIX, tags=["Import"])
 
 
 @app.exception_handler(Exception)

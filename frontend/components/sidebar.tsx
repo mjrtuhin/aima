@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Megaphone, PenTool,
-  Eye, BarChart3, TrendingDown, Bot, Settings, Zap
+  Eye, BarChart3, TrendingDown, Bot, Settings, Zap, Upload
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/customers", icon: Users, label: "Customers" },
+  { href: "/import", icon: Upload, label: "Import Data" },
   { href: "/campaigns", icon: Megaphone, label: "Campaigns" },
   { href: "/content-studio", icon: PenTool, label: "Content Studio" },
   { href: "/brand-monitor", icon: Eye, label: "Brand Monitor" },
