@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-common-env: &common-env
   AIMA_ENV: ${AIMA_ENV:-development}
   DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-aima}:${POSTGRES_PASSWORD:-aima_password}@postgres:5432/${POSTGRES_DB:-aima}
