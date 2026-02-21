@@ -107,8 +107,8 @@ export default function AttributionPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Attribution and MMM</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-white">Attribution and MMM</h1>
+        <p className="text-gray-400 text-sm mt-1">
           Neural Marketing Mix Model with adstock, saturation, and causal channel attribution.
         </p>
       </div>

@@ -96,8 +96,8 @@ export default function CLVChurnPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">CLV and Churn Predictor</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-white">CLV and Churn Predictor</h1>
+        <p className="text-gray-400 text-sm mt-1">
           Survival analysis with DeepHit-inspired architecture predicting churn probability at 30, 60, and 90 days.
         </p>
       </div>

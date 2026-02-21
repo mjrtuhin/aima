@@ -73,8 +73,8 @@ export default function SegmentsPage() {
     <div className="p-8 space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customer Segments</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-white">Customer Segments</h1>
+          <p className="text-gray-400 text-sm mt-1">
             AI-generated behavioral clusters using UMAP + HDBSCAN on the Temporal Behavioral Transformer fingerprints.
           </p>
         </div>

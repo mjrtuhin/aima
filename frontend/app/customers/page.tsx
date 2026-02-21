@@ -73,8 +73,8 @@ export default function CustomersPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-white">Customers</h1>
+        <p className="text-gray-400 text-sm mt-1">
           Behavioral profiles and health scores across your customer base.
         </p>
       </div>

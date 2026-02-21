@@ -94,8 +94,8 @@ export default function AgentPage() {
     <div className="p-8 h-full flex gap-6">
       <div className="flex-1 flex flex-col min-h-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Marketing Agent</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-white">Marketing Agent</h1>
+          <p className="text-gray-400 text-sm mt-1">
             Multi-agent AI planner coordinating all 7 AIMA modules via LangGraph.
           </p>
         </div>
@@ -174,7 +174,7 @@ export default function AgentPage() {
             </div>
             <div className="flex gap-3">
               <input
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 placeholder="Ask the agent to plan a campaign, analyze segments, optimize budget..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

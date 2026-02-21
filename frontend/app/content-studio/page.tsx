@@ -47,8 +47,8 @@ export default function ContentStudioPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Content Studio</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-white">Content Studio</h1>
+        <p className="text-gray-400 text-sm mt-1">
           Generate brand-consistent marketing copy using the brand voice encoder and segment context.
         </p>
       </div>
@@ -99,7 +99,7 @@ export default function ContentStudioPage() {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">Target Segment</label>
               <input
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 value={segmentName}
                 onChange={(e) => setSegmentName(e.target.value)}
                 placeholder="e.g. Champions, At Risk, New Customers"
@@ -112,7 +112,7 @@ export default function ContentStudioPage() {
               </label>
               <textarea
                 rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
                 value={productContext}
                 onChange={(e) => setProductContext(e.target.value)}
                 placeholder="Describe the product, promotion, or offer to feature in the content..."

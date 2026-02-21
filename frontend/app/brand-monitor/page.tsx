@@ -107,8 +107,8 @@ export default function BrandMonitorPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Brand Monitor</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-white">Brand Monitor</h1>
+        <p className="text-gray-400 text-sm mt-1">
           Aspect-based sentiment analysis across 10 brand dimensions using DeBERTa.
         </p>
       </div>
