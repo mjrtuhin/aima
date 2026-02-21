@@ -31,31 +31,50 @@ async def get_brand_mentions(
     except ValueError:
         return {"mentions": [], "total": 0, "period_days": days}
     since = datetime.utcnow() - timedelta(days=days)
+    params: dict = {"org_id": org_uuid, "since": since, "limit": limit}
+    conditions = "WHERE org_id = :org_id AND mentioned_at >= :since"
+    if source:
+        conditions += " AND source = :source"
+        params["source"] = source
     query = text(
-        """
-        SELECT id, org_id, source, content, sentiment_score, sentiment_label,
-               data, created_at
-        FROM alerts
-        WHERE org_id = :org_id AND created_at >= :since AND alert_type LIKE 'brand_%'
-        ORDER BY created_at DESC
+        f"""
+        SELECT id, source, author, content, url,
+               sentiment_overall, mentioned_at
+        FROM brand_mentions
+        {conditions}
+        ORDER BY mentioned_at DESC
         LIMIT :limit
         """
     )
-    result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
+    result = await db.execute(query, params)
     rows = result.fetchall()
+
+    def _label(score) -> str:
+        if score is None:
+            return "neutral"
+        f = float(score)
+        if f > 0.1:
+            return "positive"
+        if f < -0.1:
+            return "negative"
+        return "neutral"
 
     mentions = []
     for row in rows:
+        score = row.sentiment_overall
+        label = _label(score)
+        if sentiment and label != sentiment:
+            continue
         mentions.append({
             "id": str(row.id),
-            "source": row.data.get("source", "") if row.data else "",
-            "content": row.message[:500] if hasattr(row, "message") and row.message else "",
-            "sentiment_score": row.data.get("sentiment_score", 0) if row.data else 0,
-            "sentiment_label": row.data.get("sentiment_label", "neutral") if row.data else "neutral",
-            "aspects": row.data.get("aspects", {}) if row.data else {},
-            "author": row.data.get("author", "") if row.data else "",
-            "url": row.data.get("url", "") if row.data else "",
-            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "source": row.source or "",
+            "content": (row.content or "")[:500],
+            "sentiment_score": float(score) if score is not None else 0.0,
+            "sentiment_label": label,
+            "aspects": {},
+            "author": row.author or "",
+            "url": row.url or "",
+            "created_at": row.mentioned_at.isoformat() if row.mentioned_at else None,
         })
 
     return {"mentions": mentions, "total": len(mentions), "period_days": days}
@@ -76,32 +95,33 @@ async def sentiment_summary(
     query = text(
         """
         SELECT
-            COUNT(*) as total_mentions,
-            data->>'source' as source
-        FROM alerts
-        WHERE org_id = :org_id AND created_at >= :since AND alert_type LIKE 'brand_%'
-        GROUP BY data->>'source'
+            source,
+            COUNT(*) AS total_mentions,
+            AVG(sentiment_overall) AS avg_sentiment
+        FROM brand_mentions
+        WHERE org_id = :org_id AND mentioned_at >= :since
+        GROUP BY source
         """
     )
     result = await db.execute(query, {"org_id": org_uuid, "since": since})
     rows = result.fetchall()
 
-    by_source = {}
+    by_source: dict = {}
     total_mentions = 0
     total_positive = 0
     total_negative = 0
 
     for row in rows:
-        source = row.source if hasattr(row, "source") else "unknown"
-        count = row.total_mentions if hasattr(row, "total_mentions") else 0
-        by_source[source] = {
-            "count": count,
-            "avg_sentiment": 0.0,
-        }
+        src = row.source or "unknown"
+        count = int(row.total_mentions or 0)
+        avg_sent = float(row.avg_sentiment or 0.0)
+        by_source[src] = {"count": count, "avg_sentiment": round(avg_sent, 4)}
         total_mentions += count
-        total_positive += int(count * 0.4)
-        total_negative += int(count * 0.2)
+        total_positive += sum(1 for _ in range(count) if avg_sent > 0.1)
+        total_negative += sum(1 for _ in range(count) if avg_sent < -0.1)
 
+    total_positive = min(total_positive, total_mentions)
+    total_negative = min(total_negative, total_mentions - total_positive)
     sentiment_score = (total_positive - total_negative) / max(total_mentions, 1) * 100
 
     return {

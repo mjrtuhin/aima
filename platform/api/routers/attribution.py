@@ -26,41 +26,52 @@ async def get_touchpoints(
     except ValueError:
         return {"touchpoints": [], "total": 0}
     since = datetime.utcnow() - timedelta(days=days)
+    params: dict = {"org_id": org_uuid, "since": since, "limit": limit}
     if customer_id:
+        try:
+            params["customer_id"] = uuid.UUID(customer_id)
+        except ValueError:
+            return {"touchpoints": [], "total": 0}
         query = text(
             """
-            SELECT id, customer_id, created_at
-            FROM alerts
-            WHERE org_id = :org_id AND created_at >= :since AND alert_type = 'touchpoint'
-            ORDER BY created_at DESC
+            SELECT id, customer_id, channel, campaign_id,
+                   attribution_credit_aima,
+                   touchpoint_data,
+                   occurred_at
+            FROM attribution_touchpoints
+            WHERE org_id = :org_id AND occurred_at >= :since AND customer_id = :customer_id
+            ORDER BY occurred_at DESC
             LIMIT :limit
             """
         )
-        result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
     else:
         query = text(
             """
-            SELECT id, created_at
-            FROM alerts
-            WHERE org_id = :org_id AND created_at >= :since AND alert_type = 'touchpoint'
-            ORDER BY created_at DESC
+            SELECT id, customer_id, channel, campaign_id,
+                   attribution_credit_aima,
+                   touchpoint_data,
+                   occurred_at
+            FROM attribution_touchpoints
+            WHERE org_id = :org_id AND occurred_at >= :since
+            ORDER BY occurred_at DESC
             LIMIT :limit
             """
         )
-        result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
-
+    result = await db.execute(query, params)
     rows = result.fetchall()
     return {
         "touchpoints": [
             {
                 "id": str(row.id),
-                "customer_id": customer_id or "all",
-                "channel": CHANNELS[hash(str(row.id)) % len(CHANNELS)],
-                "campaign_id": None,
+                "customer_id": str(row.customer_id) if row.customer_id else (customer_id or "all"),
+                "channel": row.channel or CHANNELS[hash(str(row.id)) % len(CHANNELS)],
+                "campaign_id": str(row.campaign_id) if row.campaign_id else None,
                 "event_type": "interaction",
-                "revenue_attributed": round(50 + hash(str(row.id)) % 200, 2),
-                "attribution_weight": round((hash(str(row.id)) % 100) / 100, 2),
-                "touched_at": row.created_at.isoformat() if row.created_at else None,
+                "revenue_attributed": round(
+                    float((row.touchpoint_data or {}).get("revenue", 50 + hash(str(row.id)) % 200)), 2
+                ),
+                "attribution_weight": round(float(row.attribution_credit_aima or 0), 4),
+                "touched_at": row.occurred_at.isoformat() if row.occurred_at else None,
             }
             for row in rows
         ],
@@ -158,29 +169,32 @@ async def customer_journey(
 ):
     try:
         org_uuid = uuid.UUID(org_id)
+        customer_uuid = uuid.UUID(customer_id)
     except ValueError:
         return {"customer_id": customer_id, "journey_length": 0, "touchpoints": [], "total_revenue": 0}
     query = text(
         """
-        SELECT id, created_at
-        FROM alerts
-        WHERE org_id = :org_id AND alert_type = 'journey'
-        ORDER BY created_at ASC
+        SELECT id, channel, campaign_id, attribution_credit_aima, touchpoint_data, occurred_at
+        FROM attribution_touchpoints
+        WHERE org_id = :org_id AND customer_id = :customer_id
+        ORDER BY occurred_at ASC
         LIMIT 50
         """
     )
-    result = await db.execute(query, {"org_id": org_uuid})
+    result = await db.execute(query, {"org_id": org_uuid, "customer_id": customer_uuid})
     rows = result.fetchall()
 
     journey = [
         {
-            "channel": CHANNELS[idx % len(CHANNELS)],
+            "channel": row.channel or CHANNELS[idx % len(CHANNELS)],
             "event_type": "interaction",
-            "revenue_attributed": round(100 + hash(str(r.id)) % 300, 2),
-            "attribution_weight": round((hash(str(r.id)) % 100) / 100, 2),
-            "touched_at": r.created_at.isoformat() if r.created_at else None,
+            "revenue_attributed": round(
+                float((row.touchpoint_data or {}).get("revenue", 100 + hash(str(row.id)) % 300)), 2
+            ),
+            "attribution_weight": round(float(row.attribution_credit_aima or 0), 4),
+            "touched_at": row.occurred_at.isoformat() if row.occurred_at else None,
         }
-        for idx, r in enumerate(rows)
+        for idx, row in enumerate(rows)
     ]
 
     return {
