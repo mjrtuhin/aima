@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { api } from "@/lib/api";
 
-const ORG_ID = "demo-org";
+const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 const SEGMENT_COLORS: Record<string, string> = {
   Champions: "#6366f1",

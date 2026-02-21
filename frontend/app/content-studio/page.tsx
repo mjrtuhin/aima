@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-const ORG_ID = "demo-org";
+const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 const TONES = ["professional", "friendly", "urgent", "inspiring", "playful"];
 const CHANNELS = ["email", "sms", "push", "whatsapp"];

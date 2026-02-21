@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-const ORG_ID = "demo-org";
+const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 interface Message {
   role: "user" | "assistant";

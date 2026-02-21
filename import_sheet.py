@@ -38,7 +38,7 @@ DB_CONFIG = {
     "password": "aima_password",
 }
 
-ORG_ID = "demo-org"
+ORG_ID = "00000000-0000-0000-0000-000000000001"
 
 COLUMN_KEYWORDS = {
     "email":        ["email", "e-mail", "email_address", "buyer_email", "customer_email", "mail", "buyer email"],

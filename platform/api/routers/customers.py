@@ -24,7 +24,7 @@ class CustomerResponse(BaseModel):
 
 @router.get("", response_model=list[CustomerResponse])
 async def list_customers(
-    org_id: uuid.UUID,
+    org_id: str,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
@@ -41,7 +41,7 @@ async def list_customers(
 @router.get("/{customer_id}", response_model=CustomerResponse)
 async def get_customer(
     customer_id: uuid.UUID,
-    org_id: uuid.UUID,
+    org_id: str,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -56,7 +56,7 @@ async def get_customer(
 @router.get("/{customer_id}/features")
 async def get_customer_features(
     customer_id: uuid.UUID,
-    org_id: uuid.UUID,
+    org_id: str,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

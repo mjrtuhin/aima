@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { api } from "@/lib/api";
 
-const ORG_ID = "demo-org";
+const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (

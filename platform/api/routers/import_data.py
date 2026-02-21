@@ -44,7 +44,7 @@ COLUMN_KEYWORDS = {
 
 class ImportRequest(BaseModel):
     sheet_url: str
-    org_id: str = "demo-org"
+    org_id: str = "00000000-0000-0000-0000-000000000001"
 
 
 def _sheet_to_csv_url(url: str) -> str:

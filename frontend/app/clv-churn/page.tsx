@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { api } from "@/lib/api";
 
-const ORG_ID = "demo-org";
+const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 const RISK_COLOR: Record<string, string> = {
   high: "#ef4444",

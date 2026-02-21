@@ -27,14 +27,25 @@ from platform.api.routers import (
 
 log = structlog.get_logger()
 
+DEMO_ORG_ID = "00000000-0000-0000-0000-000000000001"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    from sqlalchemy import text
+
     log.info("AIMA API starting", env=settings.AIMA_ENV)
     _engine = get_engine()
     async with _engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    log.info("Database tables verified")
+        await conn.execute(
+            text(
+                "INSERT INTO organizations (id, name, slug) "
+                "VALUES (:id, :name, :slug) ON CONFLICT (id) DO NOTHING"
+            ),
+            {"id": DEMO_ORG_ID, "name": "Demo Organization", "slug": "demo"},
+        )
+    log.info("Database tables verified and demo org seeded")
     yield
     log.info("AIMA API shutting down")
     await get_engine().dispose()
