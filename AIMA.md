@@ -1200,3 +1200,121 @@ All 13 containers running. Ready to run: `docker compose exec api alembic upgrad
 | Prometheus | aima-prometheus | 9090 | Running |
 | Grafana | aima-grafana | 3001 | Running |
 | Flower | aima-flower | 5555 | Running |
+
+---
+
+# **BUILD LOG - Session 5 (Bug Fixes, API Audit, Google Sheet Import)**
+
+> All frontend 404 errors and API endpoint mismatches resolved. Google Sheet import feature built end-to-end.
+
+## Step 1 - docker-compose.yml Healthcheck Fix
+- API container uses `python:3.11-slim` which has no `curl`
+- Changed healthcheck to Python urllib: `python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"`
+- Added `start_period: 30s` to give API time to boot before first check
+
+## Step 2 - AIMA_EXPLAINED.md (840 lines, 12 Mermaid flowcharts)
+- Created comprehensive non-technical platform explanation
+- Covers: system architecture, all 7 AI modules with flowcharts, every API endpoint table, database ER diagram, Gantt chart of background jobs, tech stack diagram, business value with revenue examples
+- Committed to GitHub as `1368484`
+
+## Step 3 - Sidebar Navigation Fix (sidebar.tsx)
+- Fixed `/content` to `/content-studio` (Next.js app folder is `content-studio`)
+- Fixed `/brand` to `/brand-monitor` (Next.js app folder is `brand-monitor`)
+- Both caused 404 because sidebar hrefs did not match actual folder names
+
+## Step 4 - Content Studio Full Fix (content-studio/page.tsx + content.py)
+- Frontend called `POST /content/generate` - does not exist. Fixed to dynamic: `/content/generate/email` or `/content/generate/sms` based on selected channel
+- Payload field mismatch: `target_segment` and `product_context` changed to `segment_type` and `product_name` to match API
+- Response field mismatch: `content.cta` changed to `content.cta ?? content.cta_text` (API returns `cta_text`)
+- Backend `content.py`: `_generate_html()` had `template['cta_text']` KeyError - template dict uses key `'cta'`. Fixed.
+
+## Step 5 - Brand Monitor Full Fix (brand-monitor/page.tsx)
+- Endpoint `/brand-monitor/overview` fixed to `/brand/sentiment/summary`
+- Endpoint `/brand-monitor/mentions` fixed to `/brand/mentions`
+- API returns `dimensions` as flat `{key: float}` dict, page expected `{key: {score, trend}}` - full remapping added
+- API returns `total_mentions`, `sentiment_score`, `breakdown.positive` - page used different field names - all remapped
+- Per-mention fields: API returns `content`, `sentiment_label`, `sentiment_score` - remapped to `text`, `sentiment`, `score`
+
+## Step 6 - Attribution Full Fix (attribution/page.tsx + attribution.py)
+- Endpoint `/attribution/mmm` fixed to `/attribution/mmm/results`
+- Endpoint `/attribution/roi-by-channel` fixed to `/attribution/channel-performance`
+- Endpoint `/attribution/budget-optimizer` did not exist - added new endpoint to `attribution.py`
+- API returns `channels[]` array, page expected `channel_contributions{}` keyed object - transformed with `Object.fromEntries(mmmChannels.map(...))`
+- `mmmData.r2_score` changed to `mmmData.r_squared ?? mmmData.r2_score` (API returns `r_squared`)
+- New `/budget-optimizer` endpoint: weight-based allocation across 7 channels using hash-derived ROI scores, returns `current_budget`, `recommended_budget`, `expected_revenue_lift` per channel
+
+## Step 7 - Agent Fix (agent/page.tsx + agent.py)
+- Endpoint `/agent/plans` fixed to `/agent/history` (correct endpoint name)
+- Response field `planHistoryData.plans` changed to `planHistoryData.plans ?? planHistoryData.history ?? []`
+- Backend `agent.py`: two internal navigation hrefs `/content` and `/brand` fixed to `/content-studio` and `/brand-monitor`
+
+## Step 8 - import_sheet.py (CLI Google Sheet Importer)
+- Standalone Python script for importing any Google Sheet into AIMA's PostgreSQL database
+- `sheet_to_csv_url()`: regex extracts Sheet ID and gid from any Google Sheets URL format
+- `fetch_csv()`: urllib-based download with User-Agent header
+- `detect_columns()`: keyword matching against 14 field types (email, full_name, phone, city, country, order_id, order_date, amount, product_name, status, quantity, currency, first_name, last_name)
+- `clean_amount()`: strips currency symbols, commas, returns float
+- `clean_date()`: tries 11 date formats
+- `make_customer_id()`: MD5-based deterministic UUID for upsert idempotency
+- `build_records()`: builds customer + order dicts from raw rows
+- `import_to_db()`: upserts to PostgreSQL via psycopg2 with `ON CONFLICT (id) DO UPDATE`
+- `print_mapping()`: shows user detected column mapping before confirming
+- Usage: `python import_sheet.py "GOOGLE_SHEET_URL"`
+
+## Step 9 - Import Data UI (Full End-to-End Feature)
+- **`platform/api/routers/import_data.py`** (new, 230 lines)
+  - `POST /import/preview`: fetches sheet, detects columns, returns mapping + sample without importing
+  - `POST /import/google-sheet`: full import into PostgreSQL via SQLAlchemy async upsert
+  - Same detection logic as CLI script, adapted for FastAPI + AsyncSession
+  - Registered in `platform/api/main.py` under `/api/v1/import`
+- **`frontend/app/import/page.tsx`** (new, 210 lines)
+  - 3-step flow: paste URL -> preview columns -> import
+  - Column detection table with color-coded badges per field type (14 colors)
+  - Live loading states, error display, warning banners for undetected key columns
+  - Success screen showing customers + orders count with next-step links
+  - Step-by-step guide panel explaining how to share a Google Sheet
+- **`frontend/components/sidebar.tsx`** updated
+  - Added `Upload` icon import from lucide-react
+  - Added `{ href: "/import", icon: Upload, label: "Import Data" }` between Customers and Campaigns
+
+## Commits This Session
+| Hash | Description |
+|------|-------------|
+| a24bab3 | All Docker service fixes (healthcheck, API router completions) |
+| 1368484 | Add AIMA_EXPLAINED.md with 12 Mermaid flowcharts |
+| (mid-session) | Fix Content Studio, Brand Monitor, Attribution, Agent - 7 files |
+| (mid-session) | Add import_sheet.py CLI Google Sheet importer |
+| ef47759 | Add Google Sheet import UI - /import page, backend router, sidebar link |
+
+## Files Changed This Session
+| File | Change |
+|------|--------|
+| `docker-compose.yml` | Healthcheck uses Python urllib instead of curl |
+| `AIMA_EXPLAINED.md` | New file - 840 lines, 12 Mermaid flowcharts |
+| `frontend/components/sidebar.tsx` | Fixed /content and /brand hrefs; added Import Data |
+| `frontend/app/content-studio/page.tsx` | Fixed endpoint, payload fields, cta field |
+| `frontend/app/brand-monitor/page.tsx` | Fixed endpoints + full response remapping |
+| `frontend/app/attribution/page.tsx` | Fixed endpoints + channel_contributions transform |
+| `frontend/app/agent/page.tsx` | Fixed /agent/plans to /agent/history |
+| `frontend/app/import/page.tsx` | New import UI page |
+| `platform/api/routers/content.py` | Fixed template['cta_text'] KeyError |
+| `platform/api/routers/attribution.py` | Added /budget-optimizer endpoint |
+| `platform/api/routers/agent.py` | Fixed internal hrefs |
+| `platform/api/routers/import_data.py` | New import router |
+| `platform/api/main.py` | Registered import_data router |
+| `import_sheet.py` | New CLI Google Sheet importer |
+
+## Current Status
+- All 13 Docker containers running
+- All sidebar navigation links working (no 404s)
+- All API endpoint calls matching actual FastAPI routes
+- Import Data page live at http://localhost:3000/import
+- Google Sheet import tested end-to-end (paste link, preview columns, click Import)
+- Next step: test with real Daraz order data from a Google Sheet
+
+## Next Session Priorities
+- Test import with real Daraz Google Sheet data
+- Run Re-Segment after first real import to see AI-generated customer segments
+- Add integration tests for all API endpoints
+- Add Mailchimp / ActiveCampaign connectors
+- Build WebSocket endpoint for live dashboard updates
