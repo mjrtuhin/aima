@@ -3,7 +3,7 @@
 # AIMA
 ### Artificial Intelligence for Marketing Analytics
 
-**Open-source, end-to-end AI marketing intelligence platform**
+**Open-source, self-hosted AI marketing intelligence platform**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -11,6 +11,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.3-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js&logoColor=white)](https://nextjs.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![TimescaleDB](https://img.shields.io/badge/TimescaleDB-PostgreSQL-orange)](https://www.timescale.com/)
 [![Code style: ruff](https://img.shields.io/badge/Code%20Style-ruff-000000)](https://github.com/astral-sh/ruff)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/mjrtuhin/aima/actions)
 
@@ -20,239 +21,65 @@
 
 ## What is AIMA?
 
-AIMA is a production-ready, open-source AI platform that gives any organization access to the kind of marketing intelligence previously available only to Fortune 500 companies. It unifies customer data from fragmented sources, applies seven purpose-built deep learning models, and surfaces decisions through a real-time dashboard and a multi-agent AI orchestration layer.
+AIMA is a production-ready, open-source AI platform that gives any business — from a solo Daraz seller to a mid-market e-commerce brand — access to the kind of marketing intelligence previously available only to Fortune 500 companies with $200K+/year SaaS stacks.
 
-The platform is also a research vehicle. Every module is grounded in a novel research contribution targeting top-tier venues (KDD, WWW, ACL, NeurIPS). The codebase is written to production standards: typed Python, async FastAPI, Alembic migrations, Celery workers, Docker Compose locally, Kubernetes in production, and full CI/CD via GitHub Actions.
+It unifies customer data from any source, runs seven purpose-built deep learning models continuously in the background, and surfaces decisions through a real-time dashboard and a conversational AI agent — all on your own infrastructure, with full control over your data.
 
----
-
-## Seven AI Modules
-
-### Module 1 - Customer Intelligence Engine
-
-**Problem:** Traditional RFM segmentation (invented in 1970) treats all customers the same if they share recency, frequency, and monetary values. It ignores browsing behavior, content engagement, purchase sequences, and temporal patterns.
-
-**Solution:** A novel **Temporal Behavioral Transformer (TBT)** that treats a customer's entire history as a sequence and learns dense behavioral fingerprint vectors via contrastive self-supervised learning. These vectors are then clustered using UMAP dimensionality reduction and HDBSCAN density clustering into named personas (Champions, At Risk, Hibernating, etc.), with a drift detector that fires alerts when a customer transitions across critical boundaries.
-
-**Key techniques:** Transformer encoder with CLS token pooling, contrastive loss, UMAP, HDBSCAN, RFM feature engineering (45+ computed features), automated segment naming via 11 persona rules, real-time drift detection.
+**The problem it replaces:** Marketing teams today run 6–10 disconnected tools. Klaviyo for email, Segment for tracking, Northbeam for attribution, Brandwatch for social listening, Jasper for content, ChurnZero for retention — and none of them talk to each other. A customer can be about to churn while your campaign system is sending them a new customer welcome email. AIMA fixes this by making all the intelligence available in one unified system.
 
 ---
 
-### Module 2 - Campaign Performance Predictor
-
-**Problem:** Marketers spend budgets based on intuition. There is no system that reliably forecasts open rates, click rates, conversion rates, and revenue for a campaign before it launches.
-
-**Solution:** A **multi-task deep learning model** that jointly predicts five campaign outcomes simultaneously. It encodes campaign content via a BERT-based TextEncoder and structured metadata (channel, audience size, send time, historical rates) via a StructuredEncoder, then fuses them with cross-attention to form a CampaignDNA representation, which feeds five specialized prediction heads.
-
-**Key techniques:** Multi-modal encoding, cross-attention fusion, multi-task learning with shared representations, five simultaneous regression heads (open rate, click rate, conversion rate, revenue, ROI).
-
----
-
-### Module 3 - AI Content Studio
-
-**Problem:** Generic AI writing tools produce correct text but do not know your brand voice, your audience's response patterns, or the optimal content structure for your specific customer segments.
-
-**Solution:** A **BrandVoiceEncoder** that learns four brand personality dimensions (formality, warmth, urgency, complexity) from a brand's existing content library. An EmailGenerator then conditions content generation on the brand voice profile, the target segment's behavioral fingerprint, and the campaign objective, producing subject line variants, preview text, body copy, CTA, and a complete HTML template.
-
-**Key techniques:** Brand voice embedding from content samples, segment-conditioned generation, LLM backend with template fallback, multi-channel support (email, SMS, push, WhatsApp).
-
----
-
-### Module 4 - Brand Intelligence Monitor
-
-**Problem:** Social listening tools count mentions and classify them as positive or negative. They cannot tell you whether complaints are about delivery speed, product quality, customer service, or your website. You cannot fix what you cannot measure at dimension level.
-
-**Solution:** An **Aspect-Based Sentiment Analysis (ABSA)** model built on DeBERTa-v3 that scores sentiment independently across ten brand dimensions: Quality, Value, Service, Delivery, Packaging, Website UX, Returns, Communication, Sustainability, and Innovation. The system monitors real-time brand mentions, tracks dimension-level trends over time, and fires alerts when any dimension shows a statistically significant negative shift.
-
-**Key techniques:** DeBERTa-v3 fine-tuned for ABSA, ten-dimension sentiment scoring, keyword-based fallback, time-series trend analysis, alert threshold detection.
-
----
-
-### Module 5 - Marketing Attribution Engine
-
-**Problem:** Last-click attribution, used by 80% of companies, gives 100% of purchase credit to the final touchpoint. This causes systematic over-investment in bottom-funnel channels and under-investment in awareness. Billions of dollars are misallocated annually because of this.
-
-**Solution:** A **Neural Marketing Mix Model (Neural MMM)** that learns the true causal contribution of each marketing channel to revenue. Each channel has a learned AdstockTransform (modeling the carryover effect of advertising) and a SaturationTransform (Hill function modeling diminishing returns). A channel interaction network captures cross-channel synergies. Channel ROI is computed via perturbation analysis, and a budget optimizer recommends reallocation to maximize expected revenue.
-
-**Key techniques:** Learnable adstock decay per channel, Hill function saturation curves, channel interaction modeling, perturbation-based ROI attribution, budget optimization under saturation constraints.
-
----
-
-### Module 6 - CLV and Churn Intelligence Hub
-
-**Problem:** Most companies discover churn 6 months after it happens. The behavioral signals (declining email engagement, reduced browsing, lower order values) were visible months earlier, but no system was watching.
-
-**Solution:** A **DeepHit-inspired survival analysis model** that outputs the full survival curve for each customer: the probability of remaining active at each future time step. This gives 30, 60, and 90-day churn probabilities plus a predicted Customer Lifetime Value. The model maps each risk level to a specific intervention (immediate win-back offer, personalized discount, engagement campaign, loyalty reward) and flags at-risk segments before they deteriorate.
-
-**Key techniques:** Discrete-time survival analysis, cause-specific hazard modeling, survival curve estimation, individual-level intervention recommendation, segment-level CLV aggregation.
-
----
-
-### Module 7 - Autonomous AI Marketing Agent
-
-**Problem:** All the intelligence from modules 1-6 is worthless if it sits in dashboards that nobody acts on. Marketing teams are overwhelmed and cannot systematically act on every insight.
-
-**Solution:** A **multi-agent AI orchestration system** built on LangGraph that can receive natural-language instructions, query modules 1-6 for current data, synthesize a marketing plan, and generate a prioritized campaign schedule. The planner agent understands segment context (e.g., it knows that At-Risk customers need win-back campaigns, that Champions should receive loyalty rewards, and that New Customers need nurture sequences). Users interact through a chat interface.
-
-**Key techniques:** LangGraph multi-agent orchestration, tool use across all 6 other modules, rule-based plan generation with LLM enhancement, segment-aware campaign design, full conversation history management.
-
----
-
-## Architecture
+## Platform Overview
 
 ```
-                           AIMA Platform
-  ───────────────────────────────────────────────────────────
-
-  Frontend (Next.js 14 + TypeScript + Tailwind + Recharts)
-       Dashboard | Segments | Campaigns | Content Studio
-       Brand Monitor | Attribution | CLV/Churn | AI Agent
-
-  ───────────────────────────────────────────────────────────
-
-  REST API (FastAPI + async SQLAlchemy + Pydantic v2)
-       11 Routers | JWT Auth | Prometheus Metrics | OpenAPI
-
-  ───────────────────────────────────────────────────────────
-
-  AI Modules (PyTorch + HuggingFace + LangGraph)
-    M1: Temporal       M2: Multi-Task     M3: Brand Voice
-    Behavioral         Campaign           Encoder +
-    Transformer +      Predictor          Email Generator
-    UMAP/HDBSCAN
-
-    M4: DeBERTa        M5: Neural MMM     M6: DeepHit
-    ABSA (10           Adstock +          Survival
-    dimensions)        Saturation         Analysis
-
-                    M7: LangGraph
-                    Multi-Agent Planner
-
-  ───────────────────────────────────────────────────────────
-
-  Background Workers (Celery + Redis)
-    Sync (*/30min) | Features (*/6h) | Churn (2am daily)
-    Sentiment (*/15min) | Drift (6am) | Reports (Mon 8am)
-
-  ───────────────────────────────────────────────────────────
-
-  Data Layer
-    TimescaleDB     Redis          Apache Kafka
-    (time-series    (cache +       (event streaming)
-    hypertables)    queue)
-
-    MinIO           MLflow         dbt
-    (model          (experiment    (SQL
-    artifacts)      tracking)      transforms)
-
-  ───────────────────────────────────────────────────────────
-
-  Data Connectors
-    Shopify   Klaviyo   HubSpot   Meta Ads   GA4   ...
-
-  ───────────────────────────────────────────────────────────
-
-  Infrastructure
-    Docker Compose (local) | Kubernetes + Helm (production)
-    GitHub Actions CI/CD | Prometheus + Grafana monitoring
-```
-
----
-
-## Tech Stack
-
-### AI and Machine Learning
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Deep Learning | PyTorch 2.3 | Transformer, survival analysis, MMM models |
-| Language Models | HuggingFace Transformers | DeBERTa ABSA, BERT campaign encoder |
-| LLM Orchestration | LangChain + LangGraph | Multi-agent marketing planner |
-| Clustering | UMAP + HDBSCAN | Behavioral fingerprint clustering |
-| Causal Inference | CausalML | Attribution and treatment effects |
-| Bayesian Modeling | PyMC | Marketing mix modeling priors |
-| Experiment Tracking | MLflow | Hyperparameter logging, model registry |
-
-### Backend
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| API Framework | FastAPI (async) | High-performance REST API |
-| ORM | SQLAlchemy 2.0 (async) | Type-safe async database access |
-| Validation | Pydantic v2 | Request/response validation and settings |
-| Migrations | Alembic | Schema version control |
-| Task Queue | Celery + Redis | Background ML inference and sync jobs |
-| Logging | Structlog | Structured JSON logging |
-
-### Data
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Primary Database | PostgreSQL + TimescaleDB | Relational data + time-series hypertables |
-| Cache and Queue | Redis | Session cache, Celery broker/backend |
-| Event Streaming | Apache Kafka | Real-time behavioral event ingestion |
-| Object Storage | MinIO | Model artifacts, data exports |
-| Transformations | dbt | SQL-based 3-layer transformation pipeline |
-
-### Frontend
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | Next.js 14 (App Router) | Server-side rendering and routing |
-| Language | TypeScript (strict mode) | Full type safety |
-| Styling | Tailwind CSS | Utility-first styling |
-| Data Fetching | React Query | Server state management and caching |
-| Charts | Recharts + D3.js | Interactive analytics visualizations |
-
-### Infrastructure
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Local Dev | Docker Compose | Full 10-service local stack in one command |
-| Production | Kubernetes + Helm | Autoscaling, rolling deployments |
-| CI/CD | GitHub Actions | Lint, test, build, deploy pipeline |
-| Monitoring | Prometheus + Grafana | API metrics, ML inference latency, business KPIs |
-
----
-
-## Repository Structure
-
-```
-aima/
-├── modules/                    # Seven AI modules
-│   ├── customer_intelligence/  # Module 1: TBT + UMAP/HDBSCAN clustering
-│   │   ├── models/             #   TemporalBehavioralTransformer
-│   │   ├── features/           #   FeatureEngineer (45+ features)
-│   │   ├── clustering/         #   DynamicClusteringEngine + DriftDetector
-│   │   └── api/                #   FastAPI router
-│   ├── campaign_predictor/     # Module 2: MultiTaskPerformancePredictor
-│   ├── content_studio/         # Module 3: BrandVoiceEncoder + EmailGenerator
-│   ├── brand_monitor/          # Module 4: ABSAModel (DeBERTa, 10 dimensions)
-│   ├── attribution/            # Module 5: NeuralMMMModel (adstock + saturation)
-│   ├── clv_churn/              # Module 6: DeepChurnModel (survival analysis)
-│   └── agent/                  # Module 7: PlannerAgent (LangGraph)
-│
-├── platform/                   # Backend infrastructure
-│   ├── api/                    # FastAPI app, models, config, 11 routers
-│   └── workers/                # Celery tasks (sync, inference, reporting)
-│
-├── data/                       # Data layer
-│   ├── connectors/             # Shopify, Klaviyo, HubSpot, Meta Ads, GA4
-│   ├── pipelines/              # dbt project (staging + mart models)
-│   └── schemas/                # TimescaleDB init SQL with hypertables
-│
-├── frontend/                   # Next.js 14 dashboard
-│   ├── app/                    # 8 module pages (App Router)
-│   └── components/             # Shared UI components
-│
-├── migrations/                 # Alembic migrations (versioned schema)
-├── monitoring/                 # Prometheus config + Grafana dashboards
-├── scripts/                    # Training scripts for modules 1, 2, 6
-├── tests/                      # Unit tests (30 test cases)
-├── k8s/                        # Kubernetes Helm values
-├── docker-compose.yml          # Full local stack (10 services)
-├── pyproject.toml              # Python project + all dependencies
-└── Makefile                    # Developer workflow commands
+┌─────────────────────────────────────────────────────────────────────┐
+│                         AIMA Platform                               │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   DATA SOURCES                                                      │
+│   ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │
+│   │ Shopify  │ │ Klaviyo  │ │ HubSpot  │ │ Meta Ads │ │  GA4   │  │
+│   └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └───┬────┘  │
+│        └────────────┴────────────┴────────────┴───────────┘       │
+│                              │                                      │
+│                   ┌──────────▼──────────┐                          │
+│                   │  Google Sheet Import │  ← paste any sheet link  │
+│                   │  (Auto-detect cols)  │                          │
+│                   └──────────┬──────────┘                          │
+│                              │                                      │
+│   STORAGE LAYER              │                                      │
+│   ┌───────────────┐ ┌────────▼────────┐ ┌──────────┐ ┌─────────┐  │
+│   │  TimescaleDB  │ │   PostgreSQL    │ │  Redis   │ │  MinIO  │  │
+│   │  (time-series)│ │ (core data)     │ │(cache+q) │ │(models) │  │
+│   └───────┬───────┘ └────────┬────────┘ └────┬─────┘ └────┬────┘  │
+│           └─────────────────┴───────────────┘            │        │
+│                              │                                      │
+│   AI PROCESSING LAYER        │                                      │
+│   ┌───────────────────────────────────────────────────────────┐    │
+│   │   Celery Workers  (6 scheduled background jobs)           │    │
+│   │                                                           │    │
+│   │  M1: Customer    M2: Campaign   M3: Content   M4: Brand  │    │
+│   │  Intelligence    Predictor      Studio        Monitor    │    │
+│   │  (TBT+HDBSCAN)   (MultiTask)    (BrandVoice)  (ABSA)     │    │
+│   │                                                           │    │
+│   │  M5: Attribution  M6: CLV/Churn   M7: AI Agent           │    │
+│   │  (Neural MMM)     (DeepHit)       (LangGraph)            │    │
+│   └───────────────────────────────────────────────────────────┘    │
+│                              │                                      │
+│   API LAYER                  │                                      │
+│   ┌───────────────────────────────────────────────────────────┐    │
+│   │    FastAPI  (12 routers, async, Pydantic v2, OpenAPI)     │    │
+│   └───────────────────────────────────────────────────────────┘    │
+│                              │                                      │
+│   FRONTEND                   │                                      │
+│   ┌───────────────────────────────────────────────────────────┐    │
+│   │    Next.js 14 · TypeScript · Tailwind · React Query       │    │
+│   │    9 Pages: Dashboard | Customers | Import | Campaigns    │    │
+│   │    Content Studio | Brand Monitor | Attribution           │    │
+│   │    CLV & Churn | AI Agent                                 │    │
+│   └───────────────────────────────────────────────────────────┘    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -261,11 +88,12 @@ aima/
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.11+
-- Node.js 20+ (for frontend development)
+- Docker Desktop and Docker Compose
+- Git
 
-### Run the full stack locally
+That is everything. The platform runs entirely inside Docker containers.
+
+### 1. Clone and boot
 
 ```bash
 git clone https://github.com/mjrtuhin/aima.git
@@ -274,24 +102,83 @@ cp .env.example .env
 docker compose up -d
 ```
 
-This starts 10 services: TimescaleDB, Redis, Kafka, MinIO, MLflow, FastAPI, Celery Worker, Celery Beat, Next.js, and Prometheus.
+All 13 services start automatically. First boot takes 3–5 minutes for images to download.
 
-| Service | URL |
-|---------|-----|
-| Dashboard | http://localhost:3000 |
-| REST API | http://localhost:8000 |
-| API Docs (Swagger) | http://localhost:8000/docs |
-| MLflow Tracking | http://localhost:5000 |
-| MinIO Console | http://localhost:9001 |
-| Grafana | http://localhost:3001 |
+### 2. Open the dashboard
 
-### Run database migrations
+Navigate to **http://localhost:3000** in your browser. The dashboard is live immediately.
+
+### 3. Import your first data
+
+The fastest way to get started is by importing a Google Sheet. Go to **http://localhost:3000/import**, paste your sheet link, and your customers and orders are in the database in under 30 seconds.
+
+### Service URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Dashboard | http://localhost:3000 | Main frontend |
+| REST API | http://localhost:8000 | Backend API |
+| API Docs (Swagger) | http://localhost:8000/docs | Interactive API docs |
+| MLflow | http://localhost:5001 | Experiment tracking |
+| MinIO Console | http://localhost:9001 | Object storage (user: `minio`, pass: `minio_password`) |
+| Grafana | http://localhost:3001 | Metrics dashboards |
+| Prometheus | http://localhost:9090 | Raw metrics |
+| Flower | http://localhost:5555 | Celery task monitor |
+
+---
+
+## Getting Data Into AIMA
+
+AIMA supports three ways to bring in your customer and order data, each suited to a different use case.
+
+---
+
+### Method 1 — Google Sheet Import (Fastest, No Code)
+
+This is the easiest way to get started. Export your order data from any platform — Daraz, Shopify, WooCommerce, Amazon Seller Central, or a custom spreadsheet — and share it as a Google Sheet.
+
+**Step 1 — Prepare your sheet**
+
+Your sheet needs at minimum a header row with columns like: `Email`, `Name`, `Order Date`, `Amount`. AIMA auto-detects 14 field types — it does not care what your columns are named as long as the purpose is recognizable. A column called `Grand Total`, `GMV`, `order_amount`, or `Total` will all be detected as the order amount automatically.
+
+Detected field types: `email`, `full_name`, `first_name`, `last_name`, `phone`, `city`, `country`, `order_id`, `order_date`, `amount`, `product_name`, `status`, `quantity`, `currency`.
+
+**Step 2 — Share the sheet**
+
+In Google Sheets: click **Share** → **Change to anyone with the link** → set to **Viewer** → copy the link.
+
+**Step 3 — Import**
+
+Go to **http://localhost:3000/import**. Paste the link. Click **Preview Columns** — AIMA will show you exactly what it detected for each column before touching your database. Then click **Import**.
+
+**What happens next:** Your data goes directly into the `customers` and `orders` PostgreSQL tables. Go to the Segments page and click **Re-Segment** to run AI clustering over your imported buyers.
+
+**Column detection is flexible.** Examples of what gets auto-detected:
+
+| Your column name | Detected as |
+|-----------------|-------------|
+| `Buyer Email`, `Customer Email`, `mail` | `email` |
+| `Grand Total`, `GMV`, `order_amount`, `sale amount` | `amount` |
+| `Order Placed`, `Purchase Date`, `created_at` | `order_date` |
+| `Thana`, `District`, `Zone`, `Area` | `city` |
+| `Mobile`, `Contact No`, `telephone` | `phone` |
+
+You can also run the import from the command line:
 
 ```bash
-make migrate
+pip install psycopg2-binary --break-system-packages
+python import_sheet.py "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"
 ```
 
-### Connect your first data source
+The CLI version shows a confirmation prompt before writing to the database and prints a full column mapping summary.
+
+---
+
+### Method 2 — API Connector (Automated, Real-Time Sync)
+
+Connect AIMA directly to your live platforms. Once connected, the sync engine pulls fresh data every 30 minutes automatically.
+
+**Connect Shopify:**
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/connectors \
@@ -302,40 +189,485 @@ curl -X POST http://localhost:8000/api/v1/connectors \
     "name": "My Shopify Store",
     "credentials": {
       "shop_domain": "your-store.myshopify.com",
-      "access_token": "your-token"
+      "access_token": "shpat_xxxxxxxxxxxx"
     }
   }'
 ```
 
-### Run customer segmentation
+**Connect HubSpot:**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/modules/customer-intelligence/segment \
+curl -X POST http://localhost:8000/api/v1/connectors \
   -H "Content-Type: application/json" \
-  -d '{"org_id": "my-org", "connector_id": "shopify-1", "n_segments": "auto"}'
+  -d '{
+    "org_id": "my-org",
+    "connector_type": "hubspot",
+    "name": "HubSpot CRM",
+    "credentials": {
+      "api_key": "your-hubspot-private-app-token"
+    }
+  }'
 ```
 
-### Train Module 1 (Temporal Behavioral Transformer)
+**Connect Klaviyo:**
 
 ```bash
-make data-download
-make data-prepare
-make train-1
+curl -X POST http://localhost:8000/api/v1/connectors \
+  -H "Content-Type: application/json" \
+  -d '{
+    "org_id": "my-org",
+    "connector_type": "klaviyo",
+    "name": "Klaviyo Email",
+    "credentials": {
+      "api_key": "your-klaviyo-private-key"
+    }
+  }'
 ```
 
-All training runs are tracked in MLflow at http://localhost:5000.
+**Connect Meta Ads:**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/connectors \
+  -H "Content-Type: application/json" \
+  -d '{
+    "org_id": "my-org",
+    "connector_type": "meta_ads",
+    "name": "Facebook/Instagram Ads",
+    "credentials": {
+      "access_token": "your-meta-access-token",
+      "ad_account_id": "act_xxxxxxxxxxxxxxx"
+    }
+  }'
+```
+
+**Connect Google Analytics 4:**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/connectors \
+  -H "Content-Type: application/json" \
+  -d '{
+    "org_id": "my-org",
+    "connector_type": "google_analytics",
+    "name": "GA4 Property",
+    "credentials": {
+      "property_id": "123456789",
+      "service_account_json": "{ ...your GA4 service account JSON... }"
+    }
+  }'
+```
+
+Each connector implements `validate_credentials`, `fetch_customers`, `fetch_orders`, and `fetch_events` through a shared `BaseConnector` interface, making it straightforward to add custom connectors for any platform.
+
+---
+
+### Method 3 — Direct Database Upsert (Advanced)
+
+For ETL pipelines or bulk historical imports, write directly to the PostgreSQL instance at `localhost:5432` (database: `aima`, user: `aima`, password: `aima_password`). The schema is documented in the Database Schema section below.
+
+---
+
+## Platform Workflow
+
+Understanding how data moves through AIMA end-to-end:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 1: DATA IN                                                │
+│  Google Sheet import → OR → Connector sync (every 30 min)      │
+│  → Customers + Orders written to PostgreSQL                     │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 2: FEATURE ENGINEERING  (every 6 hours)                   │
+│  For each customer, compute 45+ behavioral features:            │
+│  Recency, Frequency, Monetary, AOV, purchase velocity,          │
+│  channel diversity, product category entropy,                   │
+│  inter-purchase time, LTV trajectory, engagement score          │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 3: AI INFERENCE  (triggered on demand or scheduled)       │
+│                                                                 │
+│  M1 → Segment customers into behavioral personas                │
+│  M2 → Predict campaign outcomes before launching                │
+│  M3 → Generate personalized email/SMS content                   │
+│  M4 → Score brand sentiment across 10 dimensions                │
+│  M5 → Attribute revenue to each marketing channel               │
+│  M6 → Predict 30/60/90-day churn risk per customer              │
+│  M7 → Orchestrate all of the above via natural language         │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 4: DECISIONS + ACTIONS                                    │
+│  View insights in dashboard → Build campaigns → Generate        │
+│  content → Set alert thresholds → Ask the AI agent to           │
+│  build a full marketing plan with prioritized next steps        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## The Seven AI Modules
+
+---
+
+### Module 1 — Customer Intelligence Engine
+
+**What it does:** Automatically groups your customers into behavioral personas without you defining the segments manually. Instead of generic RFM buckets, it learns each customer's behavioral fingerprint from their full purchase and engagement history and clusters them into named personas: Champions, Loyal, At Risk, Hibernating, New Customers, Potential Loyalists, and Lost.
+
+**The technique:** A **Temporal Behavioral Transformer (TBT)** treats each customer's event sequence as a language — tokens are purchase events, timestamps become positional encodings. A CLS token pools the entire sequence into a 128-dimensional behavioral fingerprint vector. UMAP reduces these to 2D, HDBSCAN finds natural density clusters, and a persona naming engine maps each cluster to a standard lifecycle stage using 11 rule conditions.
+
+**Real-time drift detection:** A sliding window monitor tracks each customer's persona vector. When it crosses a threshold toward a new segment (e.g., a Champion starting to disengage), an alert fires before the customer actually churns.
+
+**Dashboard page:** `/customers` and `/segments`
+
+**API endpoint:** `POST /api/v1/segments/trigger`
+
+---
+
+### Module 2 — Campaign Performance Predictor
+
+**What it does:** Before you send a campaign, AIMA predicts its open rate, click rate, conversion rate, expected revenue, and ROI. You can test 10 subject line variations and see predicted performance for each before spending a single dollar.
+
+**The technique:** A **multi-task deep learning model** with two parallel encoders. A BERT-based `TextEncoder` processes the campaign subject line and body copy. A `StructuredEncoder` handles channel type, target segment, send time, audience size, and historical rates. Cross-attention fusion creates a `CampaignDNA` vector — a single representation of the campaign — which feeds five simultaneous prediction heads.
+
+**Why multi-task matters:** Training all five outcomes jointly forces the model to learn shared representations. Understanding that high-urgency subject lines increase opens but reduce clicks, for example, is a pattern that improves all five predictions simultaneously.
+
+**Dashboard page:** `/campaigns`
+
+**API endpoint:** `POST /api/v1/campaigns`
+
+---
+
+### Module 3 — AI Content Studio
+
+**What it does:** Generates email and SMS content that is tailored to your brand's voice and adapted to the behavioral fingerprint of the target customer segment. A campaign aimed at At-Risk customers reads differently from one aimed at Champions, even for the same product.
+
+**The technique:** A `BrandVoiceEncoder` analyzes your existing content library and distills it into four learned scalars: formality (0–1), warmth (0–1), urgency (0–1), and complexity (0–1). These form a brand voice profile vector. The `EmailGenerator` conditions its generation on three inputs simultaneously: the brand voice profile, the target segment's behavioral fingerprint from Module 1, and the campaign objective. The output is a complete, ready-to-send email including subject line, preview text, body, CTA button text, and an HTML template.
+
+**Dashboard page:** `/content-studio`
+
+**API endpoints:** `POST /api/v1/content/generate/email`, `POST /api/v1/content/generate/sms`
+
+---
+
+### Module 4 — Brand Intelligence Monitor
+
+**What it does:** Monitors all brand mentions across reviews, social, and forums and scores sentiment independently across ten brand dimensions: Quality, Value, Service, Delivery, Packaging, Website UX, Returns, Communication, Sustainability, and Innovation.
+
+Standard sentiment tools tell you "this review is negative." AIMA tells you "this review is positive about Quality but negative about Delivery and neutral on Service" — so you know exactly where to focus operational improvements.
+
+**The technique:** A `DeBERTa-v3` model fine-tuned for Aspect-Based Sentiment Analysis (ABSA). For each mention, it outputs a sentiment score in [-1, +1] for all ten dimensions simultaneously. A statistical shift detector monitors moving averages and fires alerts when any dimension declines by more than one standard deviation over a rolling window.
+
+**Dashboard page:** `/brand-monitor`
+
+**API endpoints:** `GET /api/v1/brand/sentiment/summary`, `GET /api/v1/brand/mentions`
+
+---
+
+### Module 5 — Marketing Attribution Engine
+
+**What it does:** Answers the question: "Of all the revenue we made last month, how much was actually caused by each marketing channel?" Then recommends how to reallocate your budget to increase total revenue given the same spend.
+
+**Why this is hard:** Last-click attribution (used by 80% of companies) gives 100% of credit to whichever touchpoint came right before a purchase. It systematically over-credits retargeting ads and under-credits awareness campaigns. If a customer saw your Instagram ad on day 1, clicked a Google ad on day 5, and bought after an email on day 7, last-click gives 100% to the email. AIMA gives credit proportionally based on causal contribution.
+
+**The technique:** A **Neural Marketing Mix Model (Neural MMM)**. Each channel has a learned `AdstockTransform` (modeling how advertising effects decay over time — a TV ad has a longer carryover than a retargeting click) and a `SaturationTransform` (Hill function modeling diminishing returns — doubling ad spend does not double revenue). A channel interaction network captures cross-channel synergies. Revenue attribution is computed via perturbation analysis: hold all other channels constant, remove one channel's spend, and the drop in predicted revenue is that channel's true contribution.
+
+**Budget optimizer:** Given your total budget, it computes the allocation across channels that maximizes predicted revenue under each channel's current saturation curve.
+
+**Dashboard page:** `/attribution`
+
+**API endpoints:** `GET /api/v1/attribution/mmm/results`, `GET /api/v1/attribution/channel-performance`, `GET /api/v1/attribution/budget-optimizer`
+
+---
+
+### Module 6 — CLV and Churn Intelligence Hub
+
+**What it does:** For each customer, predicts the probability they will churn (stop buying) at 30, 60, and 90 days. Estimates each customer's remaining lifetime value. Maps risk levels to specific intervention strategies automatically.
+
+**The technique:** A **DeepHit-inspired discrete-time survival analysis model**. Rather than outputting a single "will churn: yes/no," it outputs the full survival curve: P(active at t=30), P(active at t=60), P(active at t=90), ... This is far more useful for intervention timing — you can see not just that a customer is at risk, but when they are likely to go inactive.
+
+Intervention mapping: Very High Risk → immediate win-back offer with discount; High Risk → personalized re-engagement campaign; Medium Risk → loyalty reward to reinforce habit; Low Risk → standard nurture sequence.
+
+**Dashboard page:** `/clv-churn`
+
+**API endpoints:** `GET /api/v1/clv-churn/predictions`, `GET /api/v1/clv-churn/segments`
+
+---
+
+### Module 7 — Autonomous AI Marketing Agent
+
+**What it does:** A conversational AI that can query all six other modules, synthesize a complete marketing plan, and recommend a prioritized action schedule — all from a single natural-language instruction.
+
+Example: Type "My Champions segment is growing but my At-Risk segment grew by 15% this week. What should I do?" — the agent queries Module 1 for segment data, Module 6 for churn probabilities, Module 3 to draft win-back campaign content, and returns a full prioritized plan with drafts, timelines, and expected outcomes.
+
+**The technique:** A **LangGraph multi-agent system** with a PlannerAgent as the orchestrator. Tools registered to the agent give it access to all six module APIs. It maintains full conversation history and context across turns, understands segment-specific intervention logic (Champions → loyalty, At-Risk → win-back, New → nurture), and can generate a complete campaign schedule with subject lines, send times, audience filters, and revenue projections.
+
+**Dashboard page:** `/agent`
+
+**API endpoints:** `POST /api/v1/agent/chat`, `GET /api/v1/agent/history`
+
+---
+
+## Frontend Pages
+
+| Page | Route | What You See |
+|------|-------|--------------|
+| Dashboard | `/` | System health, active segment counts, recent alerts, connector status |
+| Customers | `/customers` | Full customer list with search, health scores, segment tags |
+| Import Data | `/import` | Google Sheet import with column preview and detection |
+| Campaigns | `/campaigns` | Campaign list, performance metrics, create campaign form |
+| Content Studio | `/content-studio` | Generate email/SMS content by segment with tone and channel controls |
+| Brand Monitor | `/brand-monitor` | Sentiment scores across 10 dimensions, recent mention feed |
+| Attribution | `/attribution` | Channel contribution breakdown, MMM results, budget optimizer |
+| CLV & Churn | `/clv-churn` | Churn probability distribution, CLV by segment, intervention recommendations |
+| AI Agent | `/agent` | Chat interface — ask anything about your marketing data |
+
+---
+
+## API Reference
+
+Full interactive documentation is available at **http://localhost:8000/docs** once the stack is running. Key endpoints:
+
+### Data Import
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/import/preview` | Preview Google Sheet column detection without importing |
+| POST | `/api/v1/import/google-sheet` | Import customers + orders from a public Google Sheet |
+
+### Connectors
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/connectors` | Register a new data connector |
+| GET | `/api/v1/connectors` | List all connectors for an org |
+| DELETE | `/api/v1/connectors/{id}` | Remove a connector |
+
+### Customers
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/customers` | List customers with search, pagination |
+| GET | `/api/v1/customers/{id}` | Get single customer profile |
+
+### Segments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/segments` | List all AI-generated segments |
+| POST | `/api/v1/segments/trigger` | Trigger a segmentation run |
+
+### Campaigns
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/campaigns` | List campaigns |
+| POST | `/api/v1/campaigns` | Create a new campaign |
+
+### Content Studio
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/content/generate/email` | Generate email content for a segment |
+| POST | `/api/v1/content/generate/sms` | Generate SMS content for a segment |
+
+### Brand Monitor
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/brand/sentiment/summary` | 10-dimension sentiment scores + trend |
+| GET | `/api/v1/brand/mentions` | Recent brand mentions with ABSA scores |
+
+### Attribution
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/attribution/mmm/results` | Neural MMM channel contribution results |
+| GET | `/api/v1/attribution/channel-performance` | Per-channel ROI and revenue |
+| GET | `/api/v1/attribution/budget-optimizer` | Budget reallocation recommendations |
+
+### CLV & Churn
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/clv-churn/predictions` | Churn probabilities per customer |
+| GET | `/api/v1/clv-churn/segments` | CLV aggregated by segment |
+
+### AI Agent
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/agent/chat` | Send a message to the AI marketing agent |
+| GET | `/api/v1/agent/history` | Conversation history |
+
+---
+
+## Background Processing
+
+Six Celery tasks run automatically on schedule. No configuration required.
+
+| Task | Schedule | What It Does |
+|------|----------|--------------|
+| `sync_all_connectors` | Every 30 min | Pulls fresh data from all connected platforms |
+| `recompute_customer_features` | Every 6 hours | Computes 45+ behavioral features per customer |
+| `update_churn_predictions` | Daily at 2am | Runs Module 6 DeepHit model over all customers |
+| `update_brand_sentiment` | Every 15 min | Runs Module 4 ABSA over new brand mentions |
+| `check_segment_drift` | Daily at 6am | Detects and alerts on segment composition shifts |
+| `generate_weekly_reports` | Monday at 8am | Compiles cross-module performance summary |
+
+Monitor task execution at **http://localhost:5555** (Flower).
+
+---
+
+## Database Schema
+
+AIMA uses PostgreSQL extended with TimescaleDB for automatic time-series partitioning. Time-partitioned tables use hypertables for high-write performance on event streams.
+
+| Table | Type | Key Columns |
+|-------|------|-------------|
+| `customers` | Regular | `id`, `org_id`, `email`, `first_name`, `last_name`, `phone`, `city`, `country`, `tags`, `properties` |
+| `customer_features` | Regular | `customer_id`, `rfm_score`, `health_score`, 45+ computed behavioral metrics |
+| `customer_segments` | Regular | `id`, `org_id`, `name`, `persona_type`, `size`, `avg_clv` |
+| `customer_segment_memberships` | Regular | `customer_id`, `segment_id`, transition timestamps |
+| `orders` | **Hypertable** (ordered_at) | `id`, `customer_id`, `amount`, `currency`, `status`, `items` (JSONB), `ordered_at` |
+| `customer_events` | **Hypertable** (created_at) | `id`, `customer_id`, `event_type`, `channel`, `properties`, `created_at` |
+| `brand_mentions` | **Hypertable** (created_at) | `id`, `org_id`, `content`, `source`, `sentiment_scores` (JSONB), `created_at` |
+| `campaigns` | Regular | `id`, `org_id`, `name`, `channel`, `predicted_*`, `actual_*` metrics |
+| `connectors` | Regular | `id`, `org_id`, `connector_type`, `credentials` (encrypted), `last_sync_at` |
+| `alerts` | Regular | `id`, `org_id`, `alert_type`, `severity`, `message`, `resolved` |
+
+Schema versioning is managed with Alembic. Migrations are in `migrations/versions/`.
+
+---
+
+## Tech Stack
+
+### AI and Machine Learning
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| PyTorch | 2.3 | All deep learning models (TBT, MultiTask, DeepHit, NeuralMMM) |
+| HuggingFace Transformers | 4.x | DeBERTa-v3 ABSA, BERT campaign encoder |
+| LangChain + LangGraph | Latest | Multi-agent orchestration for Module 7 |
+| UMAP-learn | 0.5 | Dimensionality reduction for behavioral fingerprint clustering |
+| HDBSCAN | 0.8 | Density-based clustering (handles arbitrary cluster shapes) |
+| CausalML | Latest | Attribution and treatment effect estimation |
+| PyMC | 5.x | Bayesian priors for marketing mix modeling |
+| MLflow | 2.x | Experiment tracking, model registry, artifact storage |
+
+### Backend
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| FastAPI | 0.111 | Async REST API (12 routers, 40+ endpoints) |
+| SQLAlchemy | 2.0 | Async ORM with type-safe queries |
+| Pydantic | v2 | Request/response validation and settings management |
+| Alembic | Latest | Database schema version control |
+| Celery | 5.x | Distributed background task queue |
+| Structlog | Latest | Structured JSON logging |
+
+### Data
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| PostgreSQL | 15 + TimescaleDB | Core relational data + time-series hypertables |
+| Redis | 7 | Celery broker/backend, session cache |
+| Apache Kafka | 3.x | Real-time behavioral event streaming |
+| MinIO | Latest | S3-compatible object storage for models and exports |
+| dbt | Core | SQL-based 3-layer transformation pipeline |
+
+### Frontend
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| Next.js | 14 (App Router) | Server-side rendering, file-based routing |
+| TypeScript | Strict mode | Full type safety across all components |
+| Tailwind CSS | 3.x | Utility-first styling |
+| React Query | 5.x | Server state management and intelligent caching |
+| Recharts | 2.x | Interactive analytics charts and visualizations |
+| Lucide React | Latest | Icon system |
+| Axios | Latest | HTTP client with interceptors |
+
+### Infrastructure
+
+| Technology | Purpose |
+|-----------|---------|
+| Docker Compose | Full 13-service local stack in one command |
+| Kubernetes + Helm | Production autoscaling and rolling deployments |
+| GitHub Actions | CI/CD: lint → test → build → deploy |
+| Prometheus | API metrics, ML inference latency, business KPIs |
+| Grafana | Auto-provisioned dashboards for all metrics |
+
+---
+
+## Repository Structure
+
+```
+aima/
+├── modules/                     # Seven AI modules
+│   ├── customer_intelligence/   # M1: TBT + UMAP/HDBSCAN
+│   │   ├── models/              #   TemporalBehavioralTransformer
+│   │   ├── features/            #   FeatureEngineer (45+ features)
+│   │   ├── clustering/          #   DynamicClusteringEngine + DriftDetector
+│   │   └── api/                 #   FastAPI router
+│   ├── campaign_predictor/      # M2: MultiTaskPerformancePredictor
+│   ├── content_studio/          # M3: BrandVoiceEncoder + EmailGenerator
+│   ├── brand_monitor/           # M4: ABSAModel (DeBERTa, 10 dimensions)
+│   ├── attribution/             # M5: NeuralMMMModel (adstock + saturation)
+│   ├── clv_churn/               # M6: DeepChurnModel (survival analysis)
+│   └── agent/                   # M7: PlannerAgent (LangGraph)
+│
+├── platform/                    # Backend infrastructure
+│   ├── api/                     # FastAPI app, models, config
+│   │   ├── routers/             #   12 route handlers
+│   │   ├── models.py            #   SQLAlchemy ORM models
+│   │   ├── database.py          #   Async engine + session factory
+│   │   └── main.py              #   App factory and middleware
+│   └── workers/                 # Celery tasks (sync, inference, reporting)
+│
+├── data/                        # Data layer
+│   ├── connectors/              # Shopify, Klaviyo, HubSpot, Meta Ads, GA4
+│   ├── pipelines/               # dbt project (staging + mart models)
+│   └── schemas/                 # TimescaleDB init SQL with hypertables
+│
+├── frontend/                    # Next.js 14 dashboard
+│   ├── app/                     # 9 module pages (App Router)
+│   │   ├── page.tsx             #   Dashboard
+│   │   ├── customers/           #   Customers list + health scores
+│   │   ├── import/              #   Google Sheet import UI
+│   │   ├── campaigns/           #   Campaign management
+│   │   ├── content-studio/      #   AI content generation
+│   │   ├── brand-monitor/       #   ABSA sentiment dashboard
+│   │   ├── attribution/         #   MMM + budget optimizer
+│   │   ├── clv-churn/           #   Survival analysis dashboard
+│   │   └── agent/               #   AI agent chat interface
+│   ├── components/              #   Sidebar, shared UI components
+│   └── lib/                     #   API client (axios)
+│
+├── migrations/                  # Alembic versioned schema migrations
+├── monitoring/                  # Prometheus config + Grafana dashboards
+├── scripts/                     # Training scripts for modules 1, 2, 6
+├── tests/                       # Unit tests (39 test cases)
+├── k8s/                         # Kubernetes Helm values
+├── import_sheet.py              # CLI Google Sheet importer
+├── docker-compose.yml           # Full local stack (13 services)
+├── pyproject.toml               # Python project + all dependencies
+└── Makefile                     # Developer workflow commands
+```
 
 ---
 
 ## Developer Workflow
 
-The `Makefile` covers the full development cycle:
-
 ```bash
 make dev          # Start all Docker services
-make migrate      # Run Alembic migrations
+make migrate      # Run Alembic schema migrations
 make test         # Run pytest with coverage report
-make lint         # ruff + mypy type checking
+make lint         # ruff check + mypy type checking
 make format       # Auto-format with ruff
 make train-all    # Download data, prepare sequences, train modules 1/2/6
 make dbt-run      # Run dbt transformation pipeline
@@ -345,131 +677,117 @@ make clean        # Remove caches and compiled files
 
 ---
 
-## Data Connectors
+## Adding a Custom Connector
 
-AIMA ships with five production-ready connectors. Each implements the `BaseConnector` abstract class and self-registers via the `ConnectorRegistry` decorator pattern.
+Adding a new data source connector requires implementing one class with four methods. AIMA handles registration, scheduling, and error handling automatically.
 
-| Connector | API Version | Data Fetched |
-|-----------|------------|--------------|
-| Shopify | Admin REST 2024-04 | Customers, orders (cursor-paginated) |
-| Klaviyo | v3 (revision 2024-05-15) | Profiles, email events |
-| HubSpot | v3 | Contacts, deals, lifecycle stages |
-| Meta Ads | Graph API v19.0 | Campaign insights, audiences, purchase actions |
-| Google Analytics 4 | Data API v1 | Sessions, conversions, engagement, page performance |
+```python
+from data.connectors.base import BaseConnector, ConnectorRegistry
 
-Adding a new connector requires implementing one class with four methods: `validate_credentials`, `fetch_customers`, `fetch_orders`, `fetch_events`.
+@ConnectorRegistry.register("my_platform")
+class MyPlatformConnector(BaseConnector):
 
----
+    def validate_credentials(self) -> bool:
+        ...
 
-## Background Processing
+    def fetch_customers(self, since: datetime) -> list[CustomerRecord]:
+        ...
 
-Six scheduled Celery tasks run automatically:
+    def fetch_orders(self, since: datetime) -> list[OrderRecord]:
+        ...
 
-| Task | Schedule | Description |
-|------|----------|-------------|
-| `sync_all_connectors` | Every 30 minutes | Pull fresh data from all active connectors |
-| `recompute_customer_features` | Every 6 hours | Recompute all 45+ behavioral features |
-| `update_churn_predictions` | Daily at 2am | Score all customers with DeepChurnModel |
-| `update_brand_sentiment` | Every 15 minutes | Analyze new brand mentions with ABSA |
-| `check_segment_drift` | Daily at 6am | Detect and alert on segment composition shifts |
-| `generate_weekly_reports` | Monday at 8am | Compile cross-module performance summaries |
+    def fetch_events(self, since: datetime) -> list[EventRecord]:
+        ...
+```
 
-Tasks run across four dedicated queues: `sync`, `inference`, `ml`, `reporting`.
-
----
-
-## Database Schema
-
-TimescaleDB extends PostgreSQL with automatic time-series partitioning. Key tables with their hypertable status:
-
-| Table | Type | Description |
-|-------|------|-------------|
-| `customers` | Regular | Customer profiles from all connectors |
-| `customer_features` | Regular | 45+ computed behavioral features per customer |
-| `customer_segments` | Regular | AI-generated segment definitions |
-| `customer_segment_memberships` | Regular | Customer-to-segment assignments with transition history |
-| `orders` | Hypertable (ordered_at) | Order transactions |
-| `customer_events` | Hypertable (created_at) | Behavioral event stream |
-| `brand_mentions` | Hypertable (created_at) | Social and review mentions with ABSA scores |
-| `campaigns` | Regular | Campaign definitions with predicted and actual metrics |
-| `connectors` | Regular | Data source configurations |
-| `alerts` | Regular | System-generated alerts and notifications |
-
-Schema versioning is managed with Alembic. Two migrations are included: `001_initial_schema` and `002_add_events_orders_features`.
-
----
-
-## Monitoring
-
-The Grafana dashboard (auto-provisioned at startup) covers four areas:
-
-**API Health:** Success rate, p95 latency, requests per second, active Celery tasks, per-endpoint latency breakdown, error rate by HTTP status.
-
-**ML Performance:** Inference latency per module (p50/p95), total customers segmented, churn predictions processed.
-
-**Business KPIs:** Customer count by segment over time, brand sentiment score by dimension over time.
-
-**Infrastructure:** Memory usage, CPU usage, Postgres connection count, Redis connected clients.
+No other changes are required. The connector self-registers with the registry and becomes available immediately through `POST /api/v1/connectors` with `"connector_type": "my_platform"`.
 
 ---
 
 ## Research Contributions
 
-AIMA is designed as a research platform. Seven peer-reviewed papers are planned:
+AIMA is designed as both a production platform and a research vehicle. Seven peer-reviewed papers are planned from this codebase:
 
 | Paper | Target Venue | Core Contribution |
 |-------|-------------|-------------------|
 | *Dynamic Customer Persona Generation via Temporal Behavioral Transformers* | KDD 2026 | Novel TBT architecture for behavioral fingerprinting |
-| *Pre-Launch Campaign Performance Prediction via Multi-Modal Encoding* | WWW 2026 | Multi-task campaign outcome prediction |
+| *Pre-Launch Campaign Performance Prediction via Multi-Modal Encoding* | WWW 2026 | Multi-task campaign outcome prediction before send |
 | *Conversion-Optimized Content Generation via Outcome-Supervised LLM Fine-Tuning* | ACL 2026 | Brand-voice-conditioned marketing copy generation |
-| *Temporal Brand Perception Modeling via Aspect-Level Sentiment Analysis* | Journal of Marketing Research | 10-dimension ABSA for brand monitoring |
-| *Unified Causal Attribution: MMM and MTA Reconciliation via Neural Adstock Models* | Marketing Science | Neural MMM with learnable channel parameters |
-| *Causal CLV Optimization via Individual Treatment Effect Estimation* | KDD / JMR | Survival analysis for churn and CLV prediction |
-| *Towards Autonomous Marketing: Multi-Agent LLM Framework and AIMA-Bench* | AAAI / NeurIPS | Multi-agent AI marketing orchestration and benchmark |
+| *Temporal Brand Perception Modeling via Aspect-Level Sentiment Analysis* | Journal of Marketing Research | 10-dimension ABSA for brand intelligence |
+| *Unified Causal Attribution: MMM and MTA Reconciliation via Neural Adstock Models* | Marketing Science | Neural MMM with learnable per-channel adstock and saturation |
+| *Causal CLV Optimization via Individual Treatment Effect Estimation* | KDD / JMR | Survival analysis for churn prediction and CLV |
+| *Towards Autonomous Marketing: Multi-Agent LLM Framework and AIMA-Bench* | AAAI / NeurIPS | Multi-agent AI orchestration and benchmark for marketing AI |
 
 ---
 
-## Testing
+## Testing and CI/CD
 
 ```bash
 make test
 ```
 
-The test suite covers unit tests for the three most complex subsystems:
+The test suite covers the three most architecturally complex subsystems:
 
-- `tests/unit/test_feature_engineer.py` - 15 tests for RFM computation, health score calculation, temporal feature extraction, and feature vector serialization
-- `tests/unit/test_clustering.py` - 11 tests for segment naming rules, UMAP+HDBSCAN clustering pipeline, and drift detection logic
-- `tests/unit/test_connectors.py` - 13 tests for the base connector interface, connector registry pattern, and data record dataclasses
+- `tests/unit/test_feature_engineer.py` — 15 tests for RFM computation, health score calculation, temporal feature extraction, and feature vector serialization
+- `tests/unit/test_clustering.py` — 11 tests for segment persona naming rules, UMAP+HDBSCAN pipeline, and drift detection logic
+- `tests/unit/test_connectors.py` — 13 tests for the BaseConnector interface, registry decorator pattern, and data record dataclasses
 
-CI runs the full test suite on every pull request with PostgreSQL and Redis service containers, generating a coverage report.
-
----
-
-## CI/CD Pipeline
-
-GitHub Actions runs on every push and pull request:
-
-1. **Lint** - `ruff check` and `mypy` type checking
-2. **Test** - Full pytest suite with PostgreSQL and Redis services, coverage upload
-3. **Build** - Multi-stage Docker build for the API service
-4. **Deploy** - `kubectl apply` to Kubernetes on merge to main (requires cluster credentials in GitHub Secrets)
+GitHub Actions runs the full pipeline on every push: lint with `ruff` and `mypy`, tests with PostgreSQL and Redis service containers, multi-stage Docker build, and deployment to Kubernetes on merge to main.
 
 ---
 
 ## Contributing
 
-AIMA is built to be a community platform. Contributions are welcome across all areas.
+Contributions are welcome across all areas — new AI models, new data connectors, frontend improvements, research experiments, and documentation.
 
-**Adding a new AI model:** Follow the pattern in any `modules/*/models/` directory. Each model is a standalone PyTorch module with a `predict()` method.
-
-**Adding a new data connector:** Subclass `BaseConnector` in `data/connectors/`, implement the four required methods, and decorate with `@ConnectorRegistry.register("your_connector")`. It will self-register with no other changes required.
-
-**Adding a new dbt model:** Add a `.sql` file to `data/pipelines/models/staging/` or `data/pipelines/models/marts/`. Run `make dbt-run` to apply.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for code style, branch naming, and PR guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for code style, branch naming, and pull request guidelines.
 
 ---
 
 ## License
 
-MIT License. Free to use, modify, and distribute. See [LICENSE](LICENSE).
+MIT License — free to use, modify, and distribute. See [LICENSE](LICENSE).
+
+---
+
+## Author
+
+<div align="center">
+
+### Md Julfikar Rahman Tuhin
+
+**AI/ML Engineer · Full-Stack Developer · Marketing Technology Researcher**
+
+</div>
+
+AIMA is designed, architected, and built by Md Julfikar Rahman Tuhin — an AI/ML engineer with deep expertise across the full stack of modern machine learning systems, from research-grade model architecture to production infrastructure.
+
+**Technical depth behind this project:**
+
+The platform reflects hands-on experience across multiple domains that rarely intersect in a single engineer:
+
+- **Deep learning architecture** — Transformer-based sequence models (TBT), multi-task learning with cross-attention fusion (Campaign Predictor), discrete-time survival analysis (DeepHit CLV/Churn), and learnable causal inference models (Neural MMM with adstock and saturation transforms)
+- **NLP and LLMs** — ABSA fine-tuning on DeBERTa-v3, brand voice embedding, LLM-conditioned content generation, and multi-agent orchestration via LangGraph
+- **Production ML systems** — MLflow experiment tracking, Celery-based async inference workers, feature engineering pipelines, model artifact management with MinIO, and full observability via Prometheus and Grafana
+- **Backend engineering** — Async FastAPI at scale, SQLAlchemy 2.0 async ORM, TimescaleDB hypertables for high-write time-series workloads, Alembic schema migrations, Redis-backed Celery queuing across four named queues
+- **Data engineering** — Apache Kafka event streaming, dbt 3-layer transformation pipeline (raw → staging → marts), five production API connectors (Shopify, Klaviyo, HubSpot, Meta Ads, GA4)
+- **Frontend engineering** — Next.js 14 App Router with TypeScript strict mode, React Query server state management, Recharts and D3.js visualizations, and a full design system in Tailwind CSS
+- **Infrastructure** — Full Docker Compose local development stack (13 services), Kubernetes Helm charts for production, GitHub Actions CI/CD pipeline, and auto-provisioned Grafana dashboards
+
+**The motivation behind AIMA:**
+
+The fragmentation of marketing technology has created a perverse situation where mid-market businesses — the ones who need intelligence the most — are priced out of enterprise tools, left to make million-dollar campaign decisions based on spreadsheet intuition. The 2025 marketing SaaS landscape charges $30,000–$200,000 per year for tools that should be commodity infrastructure.
+
+AIMA is a statement that this does not have to be true. Every technique in this platform — behavioral transformers, survival analysis, neural marketing mix models, multi-agent orchestration — is built on public research. The gap has never been the science. It has been the engineering and the packaging.
+
+This project is both a platform and a research contribution. The goal is to publish the architectural and empirical findings from each module as peer-reviewed papers targeting KDD, WWW, ACL, NeurIPS, and Marketing Science — establishing a rigorous, reproducible foundation for AI-native marketing intelligence.
+
+---
+
+<div align="center">
+
+Built with precision. Open-sourced with purpose.
+
+**[GitHub](https://github.com/mjrtuhin/aima)** · MIT License
+
+</div>
