@@ -1318,3 +1318,40 @@ All 13 containers running. Ready to run: `docker compose exec api alembic upgrad
 - Add integration tests for all API endpoints
 - Add Mailchimp / ActiveCampaign connectors
 - Build WebSocket endpoint for live dashboard updates
+
+---
+
+## **Progress Log — Session Update (Feb 21, 2026)**
+
+### Bug Fixes Applied
+
+**Root Cause 1: asyncpg UUID strict typing**
+- asyncpg requires `uuid.UUID` objects (not strings) for UUID columns in `text()` queries
+- Fixed in `platform/api/main.py`: seed INSERT now uses `uuid.UUID(DEMO_ORG_ID)`
+- Fixed in `platform/api/routers/import_data.py`: all UUID params wrapped with `uuid.UUID()`
+
+**Root Cause 2: CORS headers missing from error responses**
+- FastAPI `@app.exception_handler(Exception)` sends errors directly via `send()`, bypassing `CORSMiddleware`
+- Fixed: replaced with `@app.middleware("http")` which runs inside the CORS chain
+- All 500 errors now include CORS headers so the browser shows the real error, not CORS block
+
+**Root Cause 3: lifespan startup crash loop**
+- Unhandled exception in lifespan seed caused uvicorn hot-reload to enter broken state
+- Fixed: wrapped entire startup block in `try/except` — seed failure is now non-fatal
+
+**Root Cause 4: orders INSERT column mismatch**
+- `import_data.py` INSERT referenced `amount` column (doesn't exist) and `updated_at` (doesn't exist in orders table)
+- Fixed: use `total` and `subtotal`, removed `updated_at` reference
+
+**Demo org UUID standardized everywhere**
+- All frontend pages: `ORG_ID = "00000000-0000-0000-0000-000000000001"`
+- Backend `import_data.py` default org_id updated
+- `import_sheet.py` CLI importer updated
+- API now auto-seeds demo org on startup
+
+### Commits
+- `f817cc7` — Fix: asyncpg UUID params and CORS middleware for all error responses
+- `3af50b4` — Fix: import 500 error and API startup seed robustness
+- `5fff514` — Fix: replace 'demo-org' string with proper UUID for PostgreSQL compatibility
+- `16ac7c4` — Fix: page title colors to white on dark bg, input text black on white boxes
+- `f6ac3cd` — Rewrite README with full platform docs
