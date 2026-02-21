@@ -1,3 +1,4 @@
+import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -36,16 +37,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     log.info("AIMA API starting", env=settings.AIMA_ENV)
     _engine = get_engine()
-    async with _engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(
-            text(
-                "INSERT INTO organizations (id, name, slug) "
-                "VALUES (:id, :name, :slug) ON CONFLICT DO NOTHING"
-            ),
-            {"id": DEMO_ORG_ID, "name": "Demo Organization", "slug": "demo"},
-        )
-    log.info("Database tables verified and demo org seeded")
+    try:
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            await conn.execute(
+                text(
+                    "INSERT INTO organizations (id, name, slug) "
+                    "VALUES (:id, :name, :slug) ON CONFLICT DO NOTHING"
+                ),
+                {"id": uuid.UUID(DEMO_ORG_ID), "name": "Demo Organization", "slug": "demo"},
+            )
+        log.info("Database tables verified and demo org seeded")
+    except Exception as e:
+        log.warning("Startup seed failed (non-fatal)", error=str(e))
     yield
     log.info("AIMA API shutting down")
     await get_engine().dispose()
@@ -70,6 +74,19 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        log.error("Unhandled exception", path=request.url.path, error=str(exc), exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error. Please try again later."},
+        )
+
+
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
@@ -85,15 +102,6 @@ app.include_router(clv_churn.router, prefix=settings.API_PREFIX, tags=["CLV & Ch
 app.include_router(agent.router, prefix=settings.API_PREFIX, tags=["AI Agent"])
 app.include_router(alerts.router, prefix=settings.API_PREFIX, tags=["Alerts"])
 app.include_router(import_data.router, prefix=settings.API_PREFIX, tags=["Import"])
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    log.error("Unhandled exception", path=request.url.path, error=str(exc), exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error. Please try again later."},
-    )
 
 
 if __name__ == "__main__":

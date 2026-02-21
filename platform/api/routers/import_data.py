@@ -277,7 +277,7 @@ async def import_google_sheet(
                     updated_at = NOW()
             """),
             {
-                "id": c["id"], "org_id": c["org_id"],
+                "id": uuid.UUID(c["id"]), "org_id": uuid.UUID(c["org_id"]),
                 "email": c["email"],
                 "first_name": c["first_name"], "last_name": c["last_name"],
                 "phone": c["phone"], "city": c["city"], "country": c["country"],
@@ -303,7 +303,8 @@ async def import_google_sheet(
                     status     = EXCLUDED.status
             """),
             {
-                "id": o["id"], "customer_id": o["customer_id"], "org_id": o["org_id"],
+                "id": uuid.UUID(o["id"]), "customer_id": uuid.UUID(o["customer_id"]),
+                "org_id": uuid.UUID(o["org_id"]),
                 "external_id": o["external_id"],
                 "amount": o["amount"], "currency": o["currency"],
                 "status": o["status"], "items": items_json,
