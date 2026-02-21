@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await conn.execute(
             text(
                 "INSERT INTO organizations (id, name, slug) "
-                "VALUES (:id, :name, :slug) ON CONFLICT (id) DO NOTHING"
+                "VALUES (:id, :name, :slug) ON CONFLICT DO NOTHING"
             ),
             {"id": DEMO_ORG_ID, "name": "Demo Organization", "slug": "demo"},
         )

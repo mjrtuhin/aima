@@ -292,15 +292,15 @@ async def import_google_sheet(
         await db.execute(
             text("""
                 INSERT INTO orders
-                    (id, customer_id, org_id, external_id, amount, currency,
-                     status, items, ordered_at, created_at, updated_at)
+                    (id, customer_id, org_id, external_id, total, subtotal, currency,
+                     status, items, ordered_at, created_at)
                 VALUES
-                    (:id, :customer_id, :org_id, :external_id, :amount, :currency,
-                     :status, :items::jsonb, :ordered_at, NOW(), NOW())
+                    (:id, :customer_id, :org_id, :external_id, :amount, :amount, :currency,
+                     :status, :items::jsonb, :ordered_at, NOW())
                 ON CONFLICT (id) DO UPDATE SET
-                    amount     = EXCLUDED.amount,
-                    status     = EXCLUDED.status,
-                    updated_at = NOW()
+                    total      = EXCLUDED.total,
+                    subtotal   = EXCLUDED.subtotal,
+                    status     = EXCLUDED.status
             """),
             {
                 "id": o["id"], "customer_id": o["customer_id"], "org_id": o["org_id"],
