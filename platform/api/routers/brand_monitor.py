@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, func
@@ -24,6 +26,10 @@ async def get_brand_mentions(
     limit: int = Query(50),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"mentions": [], "total": 0, "period_days": days}
     since = datetime.utcnow() - timedelta(days=days)
     query = text(
         """
@@ -35,7 +41,7 @@ async def get_brand_mentions(
         LIMIT :limit
         """
     )
-    result = await db.execute(query, {"org_id": org_id, "since": since, "limit": limit})
+    result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
     rows = result.fetchall()
 
     mentions = []
@@ -61,11 +67,15 @@ async def sentiment_summary(
     days: int = Query(30),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"period_days": days, "total_mentions": 0, "sentiment_score": 0.0, "breakdown": {"positive": 0, "negative": 0, "neutral": 0}, "by_source": {}, "dimensions": {dim: 0.5 for dim in BRAND_DIMENSIONS}}
     since = datetime.utcnow() - timedelta(days=days)
-    
+
     query = text(
         """
-        SELECT 
+        SELECT
             COUNT(*) as total_mentions,
             data->>'source' as source
         FROM alerts
@@ -73,7 +83,7 @@ async def sentiment_summary(
         GROUP BY data->>'source'
         """
     )
-    result = await db.execute(query, {"org_id": org_id, "since": since})
+    result = await db.execute(query, {"org_id": org_uuid, "since": since})
     rows = result.fetchall()
 
     by_source = {}
@@ -113,8 +123,12 @@ async def brand_alerts(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"alerts": []}
     from ..models import Alert
-    stmt = select(Alert).where(Alert.org_id == org_id).order_by(Alert.created_at.desc()).limit(20)
+    stmt = select(Alert).where(Alert.org_id == org_uuid).order_by(Alert.created_at.desc()).limit(20)
     result = await db.execute(stmt)
     rows = result.scalars().all()
     

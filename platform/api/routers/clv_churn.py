@@ -20,7 +20,11 @@ async def get_churn_predictions(
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Customer).where(Customer.org_id == org_id).limit(limit).offset(offset)
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"predictions": [], "total": 0, "limit": limit, "offset": offset}
+    stmt = select(Customer).where(Customer.org_id == org_uuid).limit(limit).offset(offset)
     result = await db.execute(stmt)
     customers = result.scalars().all()
 
@@ -72,7 +76,11 @@ async def clv_churn_summary(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Customer).where(Customer.org_id == org_id)
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"total_customers_scored": 0, "at_risk_revenue": 0, "avg_clv": 0, "risk_distribution": {"high": 0, "medium": 0, "low": 0}}
+    stmt = select(Customer).where(Customer.org_id == org_uuid)
     result = await db.execute(stmt)
     customers = result.scalars().all()
 
@@ -147,6 +155,10 @@ async def at_risk_segments(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"at_risk_segments": []}
     query = text(
         """
         SELECT id, name
@@ -155,7 +167,7 @@ async def at_risk_segments(
         LIMIT 10
         """
     )
-    result = await db.execute(query, {"org_id": org_id})
+    result = await db.execute(query, {"org_id": org_uuid})
     rows = result.fetchall()
 
     return {

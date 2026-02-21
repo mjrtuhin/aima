@@ -19,14 +19,18 @@ async def list_campaigns(
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Campaign).where(Campaign.org_id == org_id)
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"campaigns": [], "total": 0, "limit": limit, "offset": offset}
+    stmt = select(Campaign).where(Campaign.org_id == org_uuid)
     if status:
         stmt = stmt.where(Campaign.status == status)
     stmt = stmt.order_by(Campaign.created_at.desc()).limit(limit).offset(offset)
     result = await db.execute(stmt)
     campaigns = result.scalars().all()
 
-    count_stmt = select(func.count()).select_from(Campaign).where(Campaign.org_id == org_id)
+    count_stmt = select(func.count()).select_from(Campaign).where(Campaign.org_id == org_uuid)
     total = (await db.execute(count_stmt)).scalar()
 
     return {
@@ -63,9 +67,13 @@ async def campaign_analytics(
     days: int = Query(30),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"period_days": days, "total_campaigns": 0, "sent_campaigns": 0, "avg_open_rate": 0, "avg_click_rate": 0, "total_revenue": 0, "by_channel": {}}
     since = datetime.utcnow() - timedelta(days=days)
     stmt = select(Campaign).where(
-        and_(Campaign.org_id == org_id, Campaign.created_at >= since)
+        and_(Campaign.org_id == org_uuid, Campaign.created_at >= since)
     )
     result = await db.execute(stmt)
     campaigns = result.scalars().all()
@@ -93,8 +101,12 @@ async def get_campaign(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid org_id")
     stmt = select(Campaign).where(
-        and_(Campaign.id == uuid.UUID(campaign_id), Campaign.org_id == org_id)
+        and_(Campaign.id == uuid.UUID(campaign_id), Campaign.org_id == org_uuid)
     )
     result = await db.execute(stmt)
     campaign = result.scalar_one_or_none()

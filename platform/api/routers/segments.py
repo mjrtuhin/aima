@@ -19,14 +19,18 @@ async def list_segments(
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(CustomerSegment).where(CustomerSegment.org_id == org_id)
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"segments": [], "total": 0, "limit": limit, "offset": offset}
+    stmt = select(CustomerSegment).where(CustomerSegment.org_id == org_uuid)
     if status:
         stmt = stmt.where(CustomerSegment.status == status)
     stmt = stmt.order_by(CustomerSegment.created_at.desc()).limit(limit).offset(offset)
     result = await db.execute(stmt)
     segments = result.scalars().all()
 
-    count_stmt = select(func.count()).select_from(CustomerSegment).where(CustomerSegment.org_id == org_id)
+    count_stmt = select(func.count()).select_from(CustomerSegment).where(CustomerSegment.org_id == org_uuid)
     total = (await db.execute(count_stmt)).scalar()
 
     return {
@@ -55,8 +59,12 @@ async def get_segment(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid org_id")
     stmt = select(CustomerSegment).where(
-        and_(CustomerSegment.id == uuid.UUID(segment_id), CustomerSegment.org_id == org_id)
+        and_(CustomerSegment.id == uuid.UUID(segment_id), CustomerSegment.org_id == org_uuid)
     )
     result = await db.execute(stmt)
     segment = result.scalar_one_or_none()
@@ -112,11 +120,15 @@ async def get_segment_members(
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"members": [], "total": 0, "limit": limit, "offset": offset}
     segment_uuid = uuid.UUID(segment_id)
     stmt = select(CustomerSegmentMembership).where(
         and_(
             CustomerSegmentMembership.segment_id == segment_uuid,
-            CustomerSegmentMembership.org_id == org_id,
+            CustomerSegmentMembership.org_id == org_uuid,
         )
     ).order_by(CustomerSegmentMembership.assigned_at.desc()).limit(limit).offset(offset)
     result = await db.execute(stmt)
@@ -125,7 +137,7 @@ async def get_segment_members(
     count_stmt = select(func.count()).select_from(CustomerSegmentMembership).where(
         and_(
             CustomerSegmentMembership.segment_id == segment_uuid,
-            CustomerSegmentMembership.org_id == org_id,
+            CustomerSegmentMembership.org_id == org_uuid,
         )
     )
     total = (await db.execute(count_stmt)).scalar()
@@ -151,8 +163,12 @@ async def activate_segment(
     org_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid org_id")
     stmt = select(CustomerSegment).where(
-        and_(CustomerSegment.id == uuid.UUID(segment_id), CustomerSegment.org_id == org_id)
+        and_(CustomerSegment.id == uuid.UUID(segment_id), CustomerSegment.org_id == org_uuid)
     )
     result = await db.execute(stmt)
     segment = result.scalar_one_or_none()

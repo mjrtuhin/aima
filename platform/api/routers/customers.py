@@ -30,7 +30,11 @@ async def list_customers(
     search: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Customer).where(Customer.org_id == org_id)
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return []
+    query = select(Customer).where(Customer.org_id == org_uuid)
     if search:
         query = query.where(Customer.email.ilike(f"%{search}%"))
     query = query.limit(limit).offset(offset)
@@ -44,8 +48,12 @@ async def get_customer(
     org_id: str,
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid org_id")
     result = await db.execute(
-        select(Customer).where(Customer.id == customer_id, Customer.org_id == org_id)
+        select(Customer).where(Customer.id == customer_id, Customer.org_id == org_uuid)
     )
     customer = result.scalar_one_or_none()
     if not customer:
@@ -59,9 +67,13 @@ async def get_customer_features(
     org_id: str,
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid org_id")
     result = await db.execute(
         select(CustomerFeatures)
-        .where(CustomerFeatures.customer_id == customer_id, CustomerFeatures.org_id == org_id)
+        .where(CustomerFeatures.customer_id == customer_id, CustomerFeatures.org_id == org_uuid)
         .order_by(CustomerFeatures.computed_at.desc())
         .limit(1)
     )

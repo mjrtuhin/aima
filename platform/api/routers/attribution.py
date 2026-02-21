@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -19,6 +21,10 @@ async def get_touchpoints(
     limit: int = Query(100),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"touchpoints": [], "total": 0}
     since = datetime.utcnow() - timedelta(days=days)
     if customer_id:
         query = text(
@@ -30,7 +36,7 @@ async def get_touchpoints(
             LIMIT :limit
             """
         )
-        result = await db.execute(query, {"org_id": org_id, "since": since, "limit": limit})
+        result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
     else:
         query = text(
             """
@@ -41,7 +47,7 @@ async def get_touchpoints(
             LIMIT :limit
             """
         )
-        result = await db.execute(query, {"org_id": org_id, "since": since, "limit": limit})
+        result = await db.execute(query, {"org_id": org_uuid, "since": since, "limit": limit})
 
     rows = result.fetchall()
     return {
@@ -150,6 +156,10 @@ async def customer_journey(
     customer_id: str = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        org_uuid = uuid.UUID(org_id)
+    except ValueError:
+        return {"customer_id": customer_id, "journey_length": 0, "touchpoints": [], "total_revenue": 0}
     query = text(
         """
         SELECT id, created_at
@@ -159,7 +169,7 @@ async def customer_journey(
         LIMIT 50
         """
     )
-    result = await db.execute(query, {"org_id": org_id})
+    result = await db.execute(query, {"org_id": org_uuid})
     rows = result.fetchall()
 
     journey = [
