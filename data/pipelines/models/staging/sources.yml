@@ -1,0 +1,122 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data loaded directly from platform connectors into PostgreSQL/TimescaleDB.
+    database: "{{ env_var('POSTGRES_DB', 'aima') }}"
+    schema: public
+    loaded_at_field: created_at
+    freshness:
+      warn_after: { count: 12, period: hour }
+      error_after: { count: 24, period: hour }
+
+    tables:
+      - name: customers
+        description: Customer profiles synced from Shopify, HubSpot, Klaviyo, and other connectors.
+        columns:
+          - name: id
+            description: Primary key (UUID).
+            tests:
+              - unique
+              - not_null
+          - name: org_id
+            description: Organization this customer belongs to.
+            tests:
+              - not_null
+          - name: email
+            description: Customer email address.
+          - name: external_id
+            description: Source system identifier (e.g., Shopify customer ID).
+          - name: first_name
+            description: Customer first name.
+          - name: last_name
+            description: Customer last name.
+          - name: created_at
+            description: Record creation timestamp.
+            tests:
+              - not_null
+
+      - name: orders
+        description: Order transactions synced from e-commerce connectors.
+        columns:
+          - name: id
+            description: Primary key (UUID).
+            tests:
+              - unique
+              - not_null
+          - name: org_id
+            tests:
+              - not_null
+          - name: customer_id
+            description: Foreign key to customers table.
+          - name: external_id
+            description: Source system order ID.
+          - name: status
+            description: Order status (pending, processing, completed, cancelled, refunded).
+            tests:
+              - accepted_values:
+                  values: [pending, processing, completed, cancelled, refunded]
+          - name: subtotal
+            description: Order subtotal before tax and shipping.
+          - name: total
+            description: Order grand total.
+          - name: created_at
+            tests:
+              - not_null
+
+      - name: customer_events
+        description: Behavioral event stream from web analytics, email platforms, and app events.
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: org_id
+            tests:
+              - not_null
+          - name: customer_id
+            description: Foreign key to customers table. Nullable for anonymous events.
+          - name: event_type
+            description: Event type (page_view, add_to_cart, purchase, email_open, email_click, etc.).
+            tests:
+              - not_null
+          - name: created_at
+            tests:
+              - not_null
+
+      - name: customer_segments
+        description: AI-generated behavioral customer segments.
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: org_id
+            tests:
+              - not_null
+          - name: name
+            description: Segment name (Champions, At Risk, etc.).
+            tests:
+              - not_null
+
+      - name: campaigns
+        description: Marketing campaigns and their predicted and actual performance metrics.
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: org_id
+            tests:
+              - not_null
+          - name: name
+            tests:
+              - not_null
+          - name: channel
+            tests:
+              - accepted_values:
+                  values: [email, sms, push, whatsapp, in_app]
+          - name: status
+            tests:
+              - accepted_values:
+                  values: [draft, scheduled, running, completed, paused, cancelled]

@@ -1,0 +1,108 @@
+replicaCount:
+  api: 3
+  worker: 4
+  scheduler: 1
+  frontend: 2
+
+image:
+  registry: ghcr.io
+  repository: your-org/aima
+  tag: latest
+  pullPolicy: IfNotPresent
+
+api:
+  port: 8000
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1Gi"
+    limits:
+      cpu: "4000m"
+      memory: "4Gi"
+  queues:
+    - sync
+    - inference
+    - ml
+    - reporting
+
+postgres:
+  enabled: true
+  image: timescale/timescaledb:latest-pg16
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  storage:
+    size: 100Gi
+    storageClass: fast-ssd
+  credentials:
+    secretName: aima-postgres-credentials
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+kafka:
+  enabled: true
+  replicas: 3
+  storage:
+    size: 50Gi
+
+minio:
+  enabled: true
+  replicas: 4
+  storage:
+    size: 500Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    api: api.aima.ai
+    frontend: app.aima.ai
+  tls:
+    enabled: true
+    secretName: aima-tls
+
+monitoring:
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+    adminPassword: ""
+
+secrets:
+  secretName: aima-secrets
+  envFrom: true
+
+config:
+  env: production
+  logLevel: INFO
+  corsOrigins: "https://app.aima.ai"
