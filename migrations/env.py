@@ -6,14 +6,37 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 import sys
 import os
+import importlib.util
+import sysconfig
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def _load_stdlib_platform():
+    for base_dir in [sysconfig.get_path('stdlib'), sysconfig.get_path('platstdlib')]:
+        if not base_dir:
+            continue
+        candidate = os.path.join(base_dir, 'platform.py')
+        if os.path.isfile(candidate):
+            spec = importlib.util.spec_from_file_location('platform', candidate)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return mod
+    return None
+
+
+_stdlib_platform = _load_stdlib_platform()
+
+sys.modules.pop('platform', None)
 
 from platform.api.database import Base
 from platform.api.models import (
     Organization, Connector, Customer, CustomerFeatures,
     CustomerSegment, CustomerSegmentMembership, Campaign, Alert
 )
+
+if _stdlib_platform is not None:
+    sys.modules['platform'] = _stdlib_platform
 
 config = context.config
 

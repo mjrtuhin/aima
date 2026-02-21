@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 
 from platform.api.config import settings
-from platform.api.database import engine, Base
+from platform.api.database import get_engine, Base
 from platform.api.routers import (
     health,
     connectors,
@@ -30,12 +30,13 @@ log = structlog.get_logger()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("AIMA API starting", env=settings.AIMA_ENV)
-    async with engine.begin() as conn:
+    _engine = get_engine()
+    async with _engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     log.info("Database tables verified")
     yield
     log.info("AIMA API shutting down")
-    await engine.dispose()
+    await get_engine().dispose()
 
 
 app = FastAPI(
@@ -50,7 +51,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

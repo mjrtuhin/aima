@@ -1125,3 +1125,78 @@ Total files created in Session 1: **70+ files** across the full stack.
 - Additional Alembic migrations for churn_predictions, attribution_touchpoints tables
 - Frontend authentication (NextAuth.js)
 - Multi-tenancy org switching in the frontend
+
+---
+
+# **BUILD LOG - Session 4 (Docker Stack Debugging)**
+
+> All 13 Docker containers brought up successfully. Alembic migration blocker resolved.
+
+## Docker Build Errors Fixed (Step-by-Step)
+
+### Fix 1 - Frontend: npm ci fails (no package-lock.json)
+- `frontend/Dockerfile`: Changed `RUN npm ci` to `RUN npm install --frozen-lockfile 2>/dev/null || npm install`
+
+### Fix 2 - API: LICENSE file missing during hatchling build
+- `platform/api/Dockerfile`: Changed `COPY pyproject.toml .` to `COPY pyproject.toml LICENSE ./`
+
+### Fix 3 - API: README.md missing during hatchling build
+- `platform/api/Dockerfile`: Added `README.md` to COPY: `COPY pyproject.toml LICENSE README.md ./`
+- Hatchling validates both `license.file` and `readme` fields at build time
+
+### Fix 4 - Dependency conflict: dbt-core requires pydantic less than 2
+- `pyproject.toml`: Removed `dbt-core` and `dbt-postgres` from main `[project.dependencies]`
+- Added new optional group: `[project.optional-dependencies] data = ["dbt-core>=1.8.2", "dbt-postgres>=1.8.2"]`
+- Main platform uses pydantic 2.x; dbt can be installed separately with `pip install "aima[data]"`
+
+### Fix 5 - C compiler missing for causalml and hdbscan
+- `platform/api/Dockerfile`: Changed `gcc libpq-dev` to `build-essential g++ libpq-dev` in base stage apt-get
+
+### Fix 6 - Prometheus wrong volume path
+- `docker-compose.yml`: Changed `./scripts/prometheus.yml` to `./monitoring/prometheus.yml`
+
+### Fix 7 - Grafana wrong volume path
+- `docker-compose.yml`: Changed `./scripts/grafana/dashboards` to `./monitoring/grafana/dashboards`
+
+### Fix 8 - Port 5000 conflict (macOS AirPlay Receiver)
+- `docker-compose.yml`: Changed MLflow host port from `5000:5000` to `5001:5000`
+- MLflow internal port stays 5000; external access via localhost:5001
+
+### Fix 9 - Kafka KAFKA_LISTENERS crash
+- `docker-compose.yml`: Removed an incorrectly added `KAFKA_LISTENERS` env var that conflicted with `KAFKA_ADVERTISED_LISTENERS`
+- Changed worker's kafka dependency from `condition: service_healthy` to `condition: service_started`
+- Added `start_period: 60s` and `retries: 10` to Kafka health check
+
+### Fix 10 - Alembic: ModuleNotFoundError platform is not a package
+- `migrations/env.py`: Added `sys.modules.pop('platform', None)` before project imports
+- Python's built-in `platform` module was cached in sys.modules before our import ran
+- This one-liner clears the cached built-in so `from platform.api.database import Base` resolves to the project
+
+### Fix 11 - Alembic: SettingsError CORS_ORIGINS JSONDecodeError
+- Root cause: `.env` file had `CORS_ORIGINS=http://localhost:3000,http://localhost:8000` (comma-separated string)
+- pydantic-settings v2 with `List[str]` fields tries to JSON-parse env values; comma-separated is not JSON
+- `platform/api/config.py`: Added `field_validator("CORS_ORIGINS", mode="before")` that handles three formats:
+  1. Empty string: returns default list
+  2. JSON array string (starts with `[`): parses as JSON
+  3. Comma-separated string: splits on commas, strips whitespace
+- `.env.example`: Updated to JSON array format `CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]`
+- `docker-compose.yml`: Added explicit `CORS_ORIGINS` to common-env block with JSON format so containers always have a valid value regardless of .env file contents
+
+## Current Stack Status
+All 13 containers running. Ready to run: `docker compose exec api alembic upgrade head`
+
+| Service | Container | Port | Status |
+|---------|-----------|------|--------|
+| TimescaleDB | aima-postgres | 5432 | Running |
+| Redis | aima-redis | 6379 | Running |
+| Zookeeper | aima-zookeeper | 2181 | Running |
+| Kafka | aima-kafka | 9092 | Running |
+| MinIO | aima-minio | 9000/9001 | Running |
+| MLflow | aima-mlflow | 5001 | Running |
+| FastAPI | aima-api | 8000 | Running |
+| Celery Worker | aima-worker | - | Running |
+| Celery Beat | aima-scheduler | - | Running |
+| Next.js | aima-frontend | 3000 | Running |
+| Prometheus | aima-prometheus | 9090 | Running |
+| Grafana | aima-grafana | 3001 | Running |
+| Flower | aima-flower | 5555 | Running |

@@ -105,3 +105,5 @@ FILES_CREATED.md
 IMPLEMENTATION_PROGRESS.md
 IMPLEMENTATION_SUMMARY.md
 PROJECT_STRUCTURE.md
+celerybeat-schedule
+frontend/next-env.d.ts

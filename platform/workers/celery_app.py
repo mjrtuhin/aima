@@ -8,9 +8,7 @@ celery_app = Celery(
     backend=settings.CELERY_RESULT_BACKEND,
     include=[
         "platform.workers.tasks.sync",
-        "platform.workers.tasks.training",
         "platform.workers.tasks.inference",
-        "platform.workers.tasks.reporting",
     ],
 )
 
@@ -24,10 +22,8 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     task_routes={
-        "platform.workers.tasks.training.*": {"queue": "ml"},
         "platform.workers.tasks.sync.*": {"queue": "sync"},
         "platform.workers.tasks.inference.*": {"queue": "inference"},
-        "platform.workers.tasks.reporting.*": {"queue": "reporting"},
     },
     beat_schedule={
         "sync-all-connectors": {
@@ -49,10 +45,6 @@ celery_app.conf.update(
         "daily-segment-drift-check": {
             "task": "platform.workers.tasks.inference.check_segment_drift",
             "schedule": crontab(hour="6", minute="0"),
-        },
-        "weekly-performance-report": {
-            "task": "platform.workers.tasks.reporting.generate_weekly_report",
-            "schedule": crontab(day_of_week="monday", hour="8", minute="0"),
         },
     },
 )

@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import List
 import os
+import json
 
 
 class Settings(BaseSettings):
@@ -42,7 +43,16 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     HUGGINGFACE_TOKEN: str = ""
 
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
+
+    def get_cors_origins(self) -> List[str]:
+        v = self.CORS_ORIGINS.strip()
+        if not v:
+            return ["http://localhost:3000", "http://localhost:8000"]
+        if v.startswith("["):
+            return json.loads(v)
+        return [origin.strip() for origin in v.split(",") if origin.strip()]
+
     API_PREFIX: str = "/api/v1"
     API_WORKERS: int = 4
     API_PORT: int = 8000

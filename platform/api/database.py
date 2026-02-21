@@ -3,24 +3,6 @@ from sqlalchemy.orm import DeclarativeBase, MappedColumn, mapped_column
 from sqlalchemy import DateTime, func
 from typing import AsyncGenerator
 from datetime import datetime
-import uuid
-
-from platform.api.config import settings
-
-
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    pool_size=20,
-    max_overflow=0,
-    pool_pre_ping=True,
-    echo=settings.DEBUG,
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
 
 
 class Base(DeclarativeBase):
@@ -36,8 +18,37 @@ class TimestampMixin:
     )
 
 
+_engine = None
+_session_factory = None
+
+
+def get_engine():
+    global _engine
+    if _engine is None:
+        from platform.api.config import settings
+        _engine = create_async_engine(
+            settings.DATABASE_URL,
+            pool_size=20,
+            max_overflow=0,
+            pool_pre_ping=True,
+            echo=settings.DEBUG,
+        )
+    return _engine
+
+
+def get_session_factory():
+    global _session_factory
+    if _session_factory is None:
+        _session_factory = async_sessionmaker(
+            bind=get_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+    return _session_factory
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
+    async with get_session_factory()() as session:
         try:
             yield session
             await session.commit()
