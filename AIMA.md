@@ -1400,3 +1400,66 @@ All 13 containers running. Ready to run: `docker compose exec api alembic upgrad
 
 ### Commits
 - `9564cd7` — Fix: wrong table queries in brand_monitor and attribution, robust DB init
+- `23ac0e3` — Update AIMA.md with session 3 bug fix details
+
+---
+
+## **NEXT SESSION — Resume From Here**
+
+### Current Status (end of Feb 21, 2026)
+- All commits: clean, authored by `mjrtuhin <nayjjokotha@gmail.com>`, zero Claude/Anthropic traces
+- API starts cleanly: ORM tables ✓, extra tables ✓, demo org seeded ✓
+- CORS fix is working (no more CORS-blocked errors in browser)
+- **Pages still returning 500** — root cause not yet fully resolved despite all fixes
+
+### What We Know Works
+- `/health` → 200 OK
+- `/health/detailed` → DB + Redis status
+- Attribution hash-based routes (channel_performance, mmm_results, budget_optimizer)
+- Content Studio page
+- AI page
+
+### What Still 500s (to investigate tomorrow)
+Open browser devtools, go to each page, check the actual `detail` field in the error response.
+In dev mode the middleware now returns `"detail": "<ExceptionType>: <message>"` so you will see the real Python error.
+
+**Most likely remaining causes to check:**
+1. `customers` GET → run `docker logs aima-api --tail=100` and look for the exception line
+2. `campaigns` GET → same
+3. `clv_churn` GET → check if it references `churn_predictions` table (not an ORM model, but IS in `_EXTRA_TABLES_SQL`? — actually it is NOT. Need to add it.)
+4. `brand_monitor` — may still fail if `brand_mentions` table was not created (it IS in `_EXTRA_TABLES_SQL` now, so should be fixed after fresh restart)
+5. `import` POST → requires `orders` table (now in `_EXTRA_TABLES_SQL`, should be fixed)
+
+### Tables NOT covered by _EXTRA_TABLES_SQL (may still be missing)
+- `churn_predictions` — used by `clv_churn.py`, NOT in ORM models, NOT in `_EXTRA_TABLES_SQL` → ADD THIS
+- `campaign_metrics` — referenced in init.sql, not in ORM, not in extra SQL
+- `model_registry` — referenced in init.sql, not in ORM, not in extra SQL
+
+### Priority Fixes for Next Session
+1. Add `churn_predictions` to `_EXTRA_TABLES_SQL` in `platform/api/main.py`
+2. Run `docker logs aima-api --tail=100` to get the actual exception messages from each failing route
+3. Fix any remaining type/schema mismatches shown in the exception detail
+4. Verify each page loads (even with empty data) without 500
+
+### Key Files
+- `platform/api/main.py` — lifespan startup, middleware, _EXTRA_TABLES_SQL
+- `platform/api/routers/customers.py` — ORM queries, UUID fix applied
+- `platform/api/routers/campaigns.py` — ORM queries, UUID fix applied
+- `platform/api/routers/clv_churn.py` — queries Customer model + text() queries
+- `platform/api/routers/brand_monitor.py` — now queries brand_mentions table
+- `platform/api/routers/attribution.py` — now queries attribution_touchpoints table
+- `platform/api/routers/segments.py` — ORM queries, UUID fix applied
+- `platform/api/routers/import_data.py` — inserts into customers + orders tables
+- `data/schemas/init.sql` — full DB schema, pgvector now optional
+
+### Git Workflow (macOS lock workaround)
+```bash
+TMPGIT=$(mktemp -d /tmp/aima_git_XXXXXX)
+cp -r /sessions/zealous-friendly-keller/mnt/aima/.git/. "$TMPGIT/"
+rm -f "$TMPGIT/index.lock" "$TMPGIT/HEAD.lock"
+git --git-dir=$TMPGIT --work-tree=/sessions/zealous-friendly-keller/mnt/aima reset HEAD
+git --git-dir=$TMPGIT --work-tree=/sessions/zealous-friendly-keller/mnt/aima add <files>
+git --git-dir=$TMPGIT --work-tree=/sessions/zealous-friendly-keller/mnt/aima commit -m "message"
+rsync -a "$TMPGIT/objects/" /sessions/zealous-friendly-keller/mnt/aima/.git/objects/
+cp "$TMPGIT/refs/heads/main" /sessions/zealous-friendly-keller/mnt/aima/.git/refs/heads/main
+```
