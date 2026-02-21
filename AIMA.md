@@ -1355,3 +1355,48 @@ All 13 containers running. Ready to run: `docker compose exec api alembic upgrad
 - `5fff514` — Fix: replace 'demo-org' string with proper UUID for PostgreSQL compatibility
 - `16ac7c4` — Fix: page title colors to white on dark bg, input text black on white boxes
 - `f6ac3cd` — Rewrite README with full platform docs
+- `76aeda8` — Fix: CORS middleware ordering and UUID type errors in all routers
+- `c5d0059` — Update AIMA.md progress log with session bug fixes
+
+---
+
+## **Progress Log — Session Update (Feb 21, 2026 — Follow-up)**
+
+### Root Cause Analysis and Additional Fixes
+
+**Root Cause 5: Wrong table queries in brand_monitor.py**
+- `get_brand_mentions` was querying `alerts` and selecting columns `source`, `content`, `sentiment_score`, `sentiment_label` — none of which exist in `alerts`
+- PostgreSQL threw "column does not exist" → 500 for every brand monitor request
+- Fixed: rewritten to query `brand_mentions` table with proper column mapping:
+  - `sentiment_overall` → `sentiment_score`
+  - `mentioned_at` → `created_at` (API response field)
+  - sentiment label computed from score threshold (>0.1=positive, <-0.1=negative)
+- `sentiment_summary` fixed to query `brand_mentions` grouped by source with AVG(sentiment_overall)
+
+**Root Cause 6: Wrong table queries in attribution.py**
+- `get_touchpoints` queried `alerts` and selected `customer_id` — not a column in `alerts`
+- `customer_journey` queried `alerts WHERE alert_type = 'journey'` — wrong table entirely
+- Actual data tables: `attribution_touchpoints` (hypertable on `occurred_at`)
+- Fixed: both endpoints now query `attribution_touchpoints` with proper column mapping:
+  - `attribution_credit_aima` → `attribution_weight`
+  - `touchpoint_data->>'revenue'` → `revenue_attributed`
+  - `occurred_at` → `touched_at`
+
+**Root Cause 7: Non-ORM tables not created if init.sql fails**
+- `orders`, `brand_mentions`, `attribution_touchpoints`, `customer_events` are in init.sql but NOT SQLAlchemy ORM models
+- If init.sql fails (e.g., pgvector missing), `create_all` does not create these tables
+- Fixed: added `_EXTRA_TABLES_SQL` in `main.py` lifespan with `CREATE TABLE IF NOT EXISTS` for all four tables
+- Lifespan now runs three separate try/except blocks: ORM create_all, extra tables, demo org seed
+
+**Root Cause 8: pgvector extension breaks init.sql**
+- `CREATE EXTENSION IF NOT EXISTS vector;` fails if pgvector is not installed, aborting the entire init.sql script
+- This left the database with NO tables on fresh installs without pgvector
+- Fixed: wrapped in `DO $$ BEGIN ... EXCEPTION WHEN OTHERS THEN RAISE WARNING ... END $$;` so it's optional
+
+**Middleware debug error exposure (development only)**
+- Previously: middleware returned generic "Internal server error. Please try again later." masking the actual Python exception
+- Fixed: in `AIMA_ENV=development`, the actual exception type and message are returned in the `detail` field
+- Production behavior unchanged
+
+### Commits
+- `9564cd7` — Fix: wrong table queries in brand_monitor and attribution, robust DB init
