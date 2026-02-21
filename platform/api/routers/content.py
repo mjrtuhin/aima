@@ -79,7 +79,7 @@ def _generate_html(template: dict, brand_name: str) -> str:
     <p style="color: #374151; line-height: 1.6;">{template['body']}</p>
     <a href="#" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px;
        border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">
-      {template['cta_text']}
+      {template['cta']}
     </a>
   </div>
   <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">

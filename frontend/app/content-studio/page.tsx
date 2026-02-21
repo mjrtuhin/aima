@@ -28,12 +28,15 @@ export default function ContentStudioPage() {
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post("/content/generate", {
+      const endpoint = channel === "email" ? "/content/generate/email" : "/content/generate/sms";
+      const res = await api.post(endpoint, {
         org_id: ORG_ID,
         channel,
         tone,
-        target_segment: segmentName,
-        product_context: productContext,
+        segment_type: segmentName,
+        product_name: productContext || "our product",
+        brand_name: "Brand",
+        goal: "engagement",
       });
       return res.data as GeneratedContent;
     },
@@ -193,11 +196,11 @@ export default function ContentStudioPage() {
                         <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{content.body}</p>
                       </div>
                     )}
-                    {content.cta && (
+                    {(content.cta ?? (content as any).cta_text) && (
                       <div>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Call to Action</p>
                         <span className="inline-block bg-indigo-600 text-white text-sm px-4 py-2 rounded-lg">
-                          {content.cta}
+                          {content.cta ?? (content as any).cta_text}
                         </span>
                       </div>
                     )}

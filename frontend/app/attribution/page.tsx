@@ -10,8 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  AreaChart,
-  Area,
   Legend,
 } from "recharts";
 import { api } from "@/lib/api";
@@ -32,15 +30,15 @@ export default function AttributionPage() {
   const { data: mmmData, isLoading: mmmLoading } = useQuery({
     queryKey: ["mmm", ORG_ID],
     queryFn: async () => {
-      const res = await api.get("/attribution/mmm", { params: { org_id: ORG_ID } });
+      const res = await api.get("/attribution/mmm/results", { params: { org_id: ORG_ID } });
       return res.data;
     },
   });
 
-  const { data: roiData, isLoading: roiLoading } = useQuery({
-    queryKey: ["roi", ORG_ID],
+  const { data: channelData, isLoading: channelLoading } = useQuery({
+    queryKey: ["channel-performance", ORG_ID],
     queryFn: async () => {
-      const res = await api.get("/attribution/roi-by-channel", { params: { org_id: ORG_ID } });
+      const res = await api.get("/attribution/channel-performance", { params: { org_id: ORG_ID } });
       return res.data;
     },
   });
@@ -55,13 +53,43 @@ export default function AttributionPage() {
     },
   });
 
-  const channelContributions = mmmData?.channel_contributions ?? {};
-  const channelRoi = roiData?.roi_by_channel ?? {};
-  const budgetAllocation = budgetData?.allocation ?? {};
+  const mmmChannels: any[] = mmmData?.channels ?? [];
+  const channelPerfList: any[] = channelData?.channels ?? [];
+
+  const channelContributions: Record<string, any> = Object.fromEntries(
+    mmmChannels.map((ch: any) => {
+      const perf = channelPerfList.find((p) => p.channel === ch.name) ?? {};
+      return [
+        ch.name,
+        {
+          contribution_pct: ch.contribution_pct ?? 0,
+          attributed_revenue: perf.revenue_attributed ?? 0,
+          adstock_decay: ch.adstock_decay ?? 0,
+          saturation_alpha: ch.saturation_alpha ?? 0,
+        },
+      ];
+    })
+  );
+
+  const channelRoi: Record<string, number> = Object.fromEntries(
+    mmmChannels.map((ch: any) => [ch.name, ch.roi ?? 0])
+  );
+
+  const budgetAllocation: Record<string, any> = budgetData?.allocation ?? {};
+
+  const topChannel =
+    mmmChannels.length > 0
+      ? mmmChannels.reduce((best: any, ch: any) =>
+          (ch.contribution_pct ?? 0) > (best.contribution_pct ?? 0) ? ch : best
+        ).name
+      : "N/A";
+
+  const totalAttributedRevenue = channelData?.total_revenue ?? 0;
+  const r2Score = mmmData?.r_squared ?? mmmData?.r2_score ?? 0;
 
   const contributionBarData = Object.entries(channelContributions).map(([channel, val]: [string, any]) => ({
     channel,
-    contribution: parseFloat((val.contribution_pct * 100).toFixed(1)),
+    contribution: parseFloat((val.contribution_pct).toFixed(1)),
     revenue: val.attributed_revenue ?? 0,
   }));
 
@@ -87,10 +115,10 @@ export default function AttributionPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Attributed Revenue", value: mmmData?.total_attributed_revenue != null ? `$${mmmData.total_attributed_revenue.toLocaleString()}` : "N/A" },
-          { label: "Top Channel", value: mmmData?.top_channel ?? "N/A" },
-          { label: "Model R2 Score", value: mmmData?.r2_score != null ? mmmData.r2_score.toFixed(3) : "N/A" },
-          { label: "Channels Analyzed", value: Object.keys(channelContributions).length },
+          { label: "Total Attributed Revenue", value: totalAttributedRevenue > 0 ? `$${totalAttributedRevenue.toLocaleString()}` : "N/A" },
+          { label: "Top Channel", value: topChannel },
+          { label: "Model R² Score", value: r2Score > 0 ? r2Score.toFixed(3) : "N/A" },
+          { label: "Channels Analyzed", value: mmmChannels.length },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-sm text-gray-500 font-medium">{s.label}</p>
@@ -125,7 +153,7 @@ export default function AttributionPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">ROI by Channel</h2>
-          {roiLoading ? (
+          {channelLoading ? (
             <div className="h-64 flex items-center justify-center text-gray-400 text-sm">Loading...</div>
           ) : roiBarData.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No ROI data available.</div>

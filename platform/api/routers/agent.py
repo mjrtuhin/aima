@@ -57,7 +57,7 @@ async def _handle_message(message: str, org_id: Optional[str], db: AsyncSession)
             "text": "I can help you create and optimize marketing campaigns. Our campaign predictor can forecast open rates, click rates, and expected revenue before you send. What type of campaign are you looking to create?",
             "actions": [
                 {"type": "navigate", "label": "Create Campaign", "href": "/campaigns"},
-                {"type": "navigate", "label": "Content Studio", "href": "/content"},
+                {"type": "navigate", "label": "Content Studio", "href": "/content-studio"},
             ],
         }
 
@@ -74,7 +74,7 @@ async def _handle_message(message: str, org_id: Optional[str], db: AsyncSession)
         return {
             "text": "Your Brand Monitor tracks sentiment across all customer touchpoints. I can flag negative sentiment spikes and alert you to emerging issues before they escalate.",
             "actions": [
-                {"type": "navigate", "label": "Brand Monitor", "href": "/brand"},
+                {"type": "navigate", "label": "Brand Monitor", "href": "/brand-monitor"},
             ],
         }
 

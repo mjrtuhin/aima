@@ -30,6 +30,13 @@ const DIMENSION_LABELS: Record<string, string> = {
   communication: "Communication",
   sustainability: "Sustainability",
   innovation: "Innovation",
+  product_quality: "Product Quality",
+  customer_service: "Customer Service",
+  pricing: "Pricing",
+  user_experience: "User Experience",
+  brand_values: "Brand Values",
+  reliability: "Reliability",
+  overall: "Overall",
 };
 
 const SENTIMENT_COLOR: Record<string, string> = {
@@ -48,8 +55,8 @@ export default function BrandMonitorPage() {
   const { data: overviewData, isLoading } = useQuery({
     queryKey: ["brand-overview", ORG_ID],
     queryFn: async () => {
-      const res = await api.get("/brand-monitor/overview", {
-        params: { org_id: ORG_ID },
+      const res = await api.get("/brand/sentiment/summary", {
+        params: { org_id: ORG_ID, days: 7 },
       });
       return res.data;
     },
@@ -59,22 +66,43 @@ export default function BrandMonitorPage() {
   const { data: mentionsData } = useQuery({
     queryKey: ["brand-mentions", ORG_ID],
     queryFn: async () => {
-      const res = await api.get("/brand-monitor/mentions", {
+      const res = await api.get("/brand/mentions", {
         params: { org_id: ORG_ID, limit: 20 },
       });
       return res.data;
     },
   });
 
-  const dimensions = overviewData?.sentiment_by_dimension ?? {};
-  const radarData = Object.entries(dimensions).map(([key, val]: [string, any]) => ({
+  const rawDimensions: Record<string, any> = overviewData?.dimensions ?? {};
+  const dimensions: Record<string, { score: number; trend: string }> = Object.fromEntries(
+    Object.entries(rawDimensions).map(([key, val]: [string, any]) => [
+      key,
+      { score: typeof val === "number" ? val : (val?.score ?? 0), trend: val?.trend ?? "stable" },
+    ])
+  );
+  const radarData = Object.entries(dimensions).map(([key, val]) => ({
     dimension: DIMENSION_LABELS[key] ?? key,
-    score: Math.round((val.score ?? 0) * 100),
+    score: Math.round(val.score * 100),
   }));
 
-  const trendData = overviewData?.sentiment_trend ?? [];
-  const mentions = mentionsData?.mentions ?? [];
-  const alertDimensions = overviewData?.alert_dimensions ?? [];
+  const trendData: any[] = overviewData?.sentiment_trend ?? [];
+  const rawMentions: any[] = mentionsData?.mentions ?? [];
+  const mentions = rawMentions.map((m: any) => ({
+    text: m.text ?? m.content ?? "",
+    sentiment: m.sentiment ?? m.sentiment_label ?? "neutral",
+    source: m.source ?? "",
+    dimension: m.dimension ?? (m.aspects ? Object.keys(m.aspects)[0] : undefined),
+    created_at: m.created_at,
+    score: m.score ?? m.sentiment_score ?? 0,
+  }));
+
+  const totalMentions: number = overviewData?.total_mentions ?? 0;
+  const breakdown = overviewData?.breakdown ?? {};
+  const positiveRate = totalMentions > 0 ? (breakdown.positive ?? 0) / totalMentions : 0;
+  const overallScore = (overviewData?.sentiment_score ?? 0) / 100;
+  const alertDimensions: string[] = Object.entries(dimensions)
+    .filter(([, val]) => val.score < 0.4)
+    .map(([key]) => key);
 
   return (
     <div className="p-8 space-y-8">
@@ -97,9 +125,9 @@ export default function BrandMonitorPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Overall Sentiment Score", value: overviewData?.overall_score != null ? `${Math.round(overviewData.overall_score * 100)}%` : "N/A" },
-          { label: "Mentions Analyzed (7d)", value: overviewData?.total_mentions_7d?.toLocaleString() ?? "N/A" },
-          { label: "Positive Rate", value: overviewData?.positive_rate != null ? `${(overviewData.positive_rate * 100).toFixed(1)}%` : "N/A" },
+          { label: "Overall Sentiment Score", value: totalMentions > 0 ? `${Math.round(overallScore * 100)}%` : "N/A" },
+          { label: "Mentions Analyzed (7d)", value: totalMentions > 0 ? totalMentions.toLocaleString() : "N/A" },
+          { label: "Positive Rate", value: totalMentions > 0 ? `${(positiveRate * 100).toFixed(1)}%` : "N/A" },
           { label: "Alert Dimensions", value: alertDimensions.length },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
@@ -130,7 +158,7 @@ export default function BrandMonitorPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Sentiment Trend (7 Days)</h2>
           {trendData.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No trend data.</div>
+            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No trend data yet.</div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={trendData}>
@@ -152,8 +180,8 @@ export default function BrandMonitorPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Dimension Breakdown</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {Object.entries(dimensions).map(([key, val]: [string, any]) => {
-              const score = Math.round((val.score ?? 0) * 100);
+            {Object.entries(dimensions).map(([key, val]) => {
+              const score = Math.round(val.score * 100);
               const color = score >= 60 ? "#34d399" : score >= 40 ? "#fbbf24" : "#f87171";
               return (
                 <div key={key} className="text-center">

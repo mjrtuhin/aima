@@ -33,9 +33,9 @@ export default function AgentPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: planHistoryData } = useQuery({
-    queryKey: ["agent-plans", ORG_ID],
+    queryKey: ["agent-history", ORG_ID],
     queryFn: async () => {
-      const res = await api.get("/agent/plans", { params: { org_id: ORG_ID } });
+      const res = await api.get("/agent/history", { params: { org_id: ORG_ID } });
       return res.data;
     },
   });
@@ -88,7 +88,7 @@ export default function AgentPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const plans = planHistoryData?.plans ?? [];
+  const plans = planHistoryData?.plans ?? planHistoryData?.history ?? [];
 
   return (
     <div className="p-8 h-full flex gap-6">
